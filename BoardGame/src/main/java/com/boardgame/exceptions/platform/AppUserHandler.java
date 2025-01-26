@@ -15,8 +15,16 @@ public class AppUserHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(UserAlreadyRegisteredException.class)
     public ResponseEntity<ErrorEntity> handleUserAlreadyRegisteredException(UserAlreadyRegisteredException ex) {
         ErrorEntity error = new ErrorEntity(LocalDateTime.now());
-        error.setHttpStatus(HttpStatus.BAD_REQUEST.value());
+        error.setHttpStatus(HttpStatus.CONFLICT.value());
         error.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST.value()).body(error);
+        return ResponseEntity.status(HttpStatus.CONFLICT.value()).body(error);
+    }
+
+    @ExceptionHandler(InvalidLoginException.class)
+    public ResponseEntity<ErrorEntity> handleInvalidLoginException(InvalidLoginException ex) {
+        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
+        error.setHttpStatus(HttpStatus.UNAUTHORIZED.value());
+        error.setMessage(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED.value()).body(error);
     }
 }

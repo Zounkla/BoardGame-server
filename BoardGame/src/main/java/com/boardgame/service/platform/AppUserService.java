@@ -4,6 +4,7 @@ import com.boardgame.config.JwtUtils;
 import com.boardgame.dto.platform.AppUserDTO;
 import com.boardgame.dto.platform.LoginRequest;
 import com.boardgame.entity.platform.AppUser;
+import com.boardgame.exceptions.platform.InvalidLoginException;
 import com.boardgame.exceptions.platform.UserAlreadyRegisteredException;
 import com.boardgame.repository.platform.AppUserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -46,16 +47,15 @@ public class AppUserService {
         return user;
     }
 
-    public String login(LoginRequest loginRequest) {
+    public String login(LoginRequest loginRequest) throws InvalidLoginException {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
             );
-
             return jwtUtils.generateJwtToken(authentication);
 
         } catch (AuthenticationException e) {
-            throw new RuntimeException("Invalid username or password");
+            throw new InvalidLoginException("Invalid username or password");
         }
     }
 

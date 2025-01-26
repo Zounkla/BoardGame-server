@@ -3,8 +3,8 @@ package com.boardgame.controller.platform;
 import com.boardgame.dto.platform.AppUserDTO;
 import com.boardgame.dto.platform.LoginRequest;
 import com.boardgame.entity.platform.AppUser;
+import com.boardgame.exceptions.platform.InvalidLoginException;
 import com.boardgame.exceptions.platform.UserAlreadyRegisteredException;
-import com.boardgame.repository.platform.AppUserRepository;
 import com.boardgame.service.platform.AppUserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,7 +29,7 @@ public class AppUserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest) throws InvalidLoginException {
         String token = appUserService.login(loginRequest);
         return ResponseEntity.ok(token);
     }
