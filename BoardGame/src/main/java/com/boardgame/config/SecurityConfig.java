@@ -12,6 +12,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @EnableWebSecurity
@@ -30,6 +32,8 @@ public class SecurityConfig {
         //TODO REMOVE THIS WHEN FRONT
         httpSecurity.csrf().disable();
         httpSecurity
+                .cors()
+                .and()
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/","/auth/register", "/auth/login").permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
@@ -56,4 +60,18 @@ public class SecurityConfig {
         return new JwtAuthenticationFilter(jwtUtils, userDetailsService);
     }
 
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**")
+                        .allowedOrigins("http://localhost:4200")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedHeaders("Content-Type", "Authorization")
+                        .allowCredentials(true)
+                        .maxAge(3600);
+            }
+        };
+    }
 }

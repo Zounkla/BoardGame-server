@@ -1,8 +1,6 @@
 package com.boardgame.controller.platform;
 
-import com.boardgame.dto.platform.AppUserDTO;
 import com.boardgame.dto.platform.LoginRequest;
-import com.boardgame.entity.platform.AppUser;
 import com.boardgame.exceptions.platform.InvalidLoginException;
 import com.boardgame.exceptions.platform.UserAlreadyRegisteredException;
 import com.boardgame.service.platform.AppUserService;
@@ -23,9 +21,13 @@ public class AppUserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AppUserDTO> register(@RequestBody LoginRequest loginRequest) throws UserAlreadyRegisteredException {
-        AppUser user = appUserService.register(loginRequest);
-        return ResponseEntity.ok(appUserService.toDTO(user));
+    public ResponseEntity<String> register(@RequestBody LoginRequest loginRequest) throws UserAlreadyRegisteredException {
+        String token = "";
+        try {
+            token = appUserService.register(loginRequest);
+        } catch (InvalidLoginException ignored) {
+        }
+        return ResponseEntity.ok(token);
     }
 
     @PostMapping("/login")

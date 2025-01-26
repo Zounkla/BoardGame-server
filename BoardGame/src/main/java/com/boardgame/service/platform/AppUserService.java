@@ -1,7 +1,6 @@
 package com.boardgame.service.platform;
 
 import com.boardgame.config.JwtUtils;
-import com.boardgame.dto.platform.AppUserDTO;
 import com.boardgame.dto.platform.LoginRequest;
 import com.boardgame.entity.platform.AppUser;
 import com.boardgame.exceptions.platform.InvalidLoginException;
@@ -33,7 +32,7 @@ public class AppUserService {
     }
 
 
-    public AppUser register(LoginRequest loginRequest) throws UserAlreadyRegisteredException {
+    public String register(LoginRequest loginRequest) throws UserAlreadyRegisteredException, InvalidLoginException {
         if (appUserRepository.findByUsername(loginRequest.getUsername()).isPresent()) {
             throw new UserAlreadyRegisteredException("User with this nickname already exists");
         }
@@ -44,7 +43,7 @@ public class AppUserService {
         user.getRoles().add("USER");
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         appUserRepository.save(user);
-        return user;
+        return login(loginRequest);
     }
 
     public String login(LoginRequest loginRequest) throws InvalidLoginException {
@@ -57,12 +56,5 @@ public class AppUserService {
         } catch (AuthenticationException e) {
             throw new InvalidLoginException("Invalid username or password");
         }
-    }
-
-    public AppUserDTO toDTO(AppUser user) {
-        AppUserDTO appUserDTO = new AppUserDTO();
-        appUserDTO.setUsername(user.getUsername());
-        appUserDTO.setRoles(user.getRoles());
-        return appUserDTO;
     }
 }
