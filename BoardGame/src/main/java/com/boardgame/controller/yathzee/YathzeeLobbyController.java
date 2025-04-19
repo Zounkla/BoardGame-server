@@ -3,6 +3,7 @@ package com.boardgame.controller.yathzee;
 import com.boardgame.dto.yathzee.YathzeeGameDTO;
 import com.boardgame.dto.yathzee.YathzeeLobbyDTO;
 import com.boardgame.entity.yathzee.YathzeeLobby;
+import com.boardgame.exceptions.yathzee.*;
 import com.boardgame.service.yathzee.YathzeeLobbyService;
 import com.boardgame.mapper.yathzee.YathzeeMapper;
 import lombok.RequiredArgsConstructor;
@@ -24,19 +25,22 @@ public class YathzeeLobbyController {
 
     @PostMapping("/create")
     public ResponseEntity<YathzeeLobbyDTO> createLobby(@RequestParam String name,
-                                                       @RequestParam(defaultValue = "6") int maxPlayers) {
+                                                       @RequestParam(defaultValue = "6") int maxPlayers)
+            throws LobbyAlreadyExistsException {
         return ResponseEntity.ok(yathzeeMapper.toYathzeeLobbyDTO(lobbyService.createLobby(name, maxPlayers)));
     }
 
     @PostMapping("/{lobbyId}/join")
-    public ResponseEntity<YathzeeLobbyDTO> joinLobby(@PathVariable Long lobbyId) {
+    public ResponseEntity<YathzeeLobbyDTO> joinLobby(@PathVariable Long lobbyId)
+            throws PlayerAlreadyInLobbyException, LobbyFullException, LobbyNotFoundException, LobbyInGameException {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String username = ((UserDetails) principal).getUsername();
         return ResponseEntity.ok(yathzeeMapper.toYathzeeLobbyDTO(lobbyService.addPlayerToLobby(lobbyId, username)));
     }
 
     @PostMapping("/{lobbyId}/start")
-    public ResponseEntity<YathzeeGameDTO> startGame(@PathVariable Long lobbyId) {
+    public ResponseEntity<YathzeeGameDTO> startGame(@PathVariable Long lobbyId)
+            throws LobbyNotFoundException, GameStartedException {
         return ResponseEntity.ok(yathzeeMapper.toYathzeeGameDTO(lobbyService.startGame(lobbyId)));
     }
 

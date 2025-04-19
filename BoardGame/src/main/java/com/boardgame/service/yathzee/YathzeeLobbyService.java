@@ -5,6 +5,7 @@ import com.boardgame.entity.yathzee.YathzeeGame;
 import com.boardgame.entity.yathzee.YathzeeLobby;
 import com.boardgame.entity.yathzee.YathzeePlayer;
 import com.boardgame.enums.lobby.LobbyStatus;
+import com.boardgame.exceptions.yathzee.*;
 import com.boardgame.repository.platform.AppUserRepository;
 import com.boardgame.repository.yathzee.YathzeeGameRepository;
 import com.boardgame.repository.yathzee.YathzeeLobbyRepository;
@@ -26,9 +27,9 @@ public class YathzeeLobbyService {
     private final YathzeeGameRepository yathzeeGameRepository;
 
     @Transactional
-    public YathzeeLobby createLobby(String name, int maxPlayers) {
+    public YathzeeLobby createLobby(String name, int maxPlayers) throws LobbyAlreadyExistsException {
         if (lobbyRepository.findByName(name).isPresent()) {
-            throw new IllegalArgumentException("YathzeeLobby with name " + name + " already exists");
+            throw new LobbyAlreadyExistsException("YathzeeLobby with name " + name + " already exists");
         }
         YathzeeLobby lobby = new YathzeeLobby();
         lobby.setName(name);
@@ -37,11 +38,18 @@ public class YathzeeLobbyService {
     }
 
     @Transactional
-    public YathzeeLobby addPlayerToLobby(Long lobbyId, String playerName) {
+    public YathzeeLobby addPlayerToLobby(Long lobbyId, String playerName)
+            throws LobbyNotFoundException, LobbyInGameException, PlayerAlreadyInLobbyException, LobbyFullException {
         YathzeeLobby lobby = lobbyRepository.findById(lobbyId)
-                .orElseThrow(() -> new IllegalArgumentException("Lobby not found."));
+                .orElseThrow(() -> new LobbyNotFoundException("Lobby not found."));
         if (lobby.getStatus() != LobbyStatus.WAITING) {
-            throw new IllegalStateException("Cannot join a lobby that is already in-game.");
+            throw new LobbyInGameException("Cannot join a lobby that is already in-game.");
+        }
+        if (lobby.getPlayers().stream().anyMatch(player -> player.getUser().getUsername().equals(playerName))) {
+            throw new PlayerAlreadyInLobbyException("Player " + playerName + " is already in a lobby.");
+        }
+        if (lobby.getPlayers().size() == lobby.getMaxPlayers()) {
+            throw new LobbyFullException("Lobby is full.");
         }
         AppUser user = appUserRepository.findByUsername(playerName).get();
         YathzeePlayer player = new YathzeePlayer();
@@ -51,11 +59,11 @@ public class YathzeeLobbyService {
     }
 
     @Transactional
-    public YathzeeGame startGame(Long lobbyId) {
+    public YathzeeGame startGame(Long lobbyId) throws LobbyNotFoundException, GameStartedException {
         YathzeeLobby lobby = lobbyRepository.findById(lobbyId)
-                .orElseThrow(() -> new IllegalArgumentException("Lobby not found."));
+                .orElseThrow(() -> new LobbyNotFoundException("Lobby not found."));
         if (lobby.getStatus() != LobbyStatus.WAITING) {
-            throw new IllegalStateException("Game already started.");
+            throw new GameStartedException("Game already started.");
         }
         lobby.setStatus(LobbyStatus.IN_GAME);
         lobbyRepository.save(lobby);
