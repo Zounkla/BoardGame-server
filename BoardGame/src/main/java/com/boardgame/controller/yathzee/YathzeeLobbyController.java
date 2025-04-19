@@ -40,7 +40,7 @@ public class YathzeeLobbyController {
         return ResponseEntity.ok(yathzeeMapper.toYathzeeGameDTO(lobbyService.startGame(lobbyId)));
     }
 
-    @GetMapping
+    @GetMapping("/available")
     public ResponseEntity<List<YathzeeLobbyDTO>> getAvailableLobbies() {
         List<YathzeeLobby> lobbies = lobbyService.getAvailableLobbies();
         List<YathzeeLobbyDTO> lobbiesDTO = lobbies.stream()

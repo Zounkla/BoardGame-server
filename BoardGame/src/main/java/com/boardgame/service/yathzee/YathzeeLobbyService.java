@@ -27,6 +27,9 @@ public class YathzeeLobbyService {
 
     @Transactional
     public YathzeeLobby createLobby(String name, int maxPlayers) {
+        if (lobbyRepository.findByName(name).isPresent()) {
+            throw new IllegalArgumentException("YathzeeLobby with name " + name + " already exists");
+        }
         YathzeeLobby lobby = new YathzeeLobby();
         lobby.setName(name);
         lobby.setMaxPlayers(maxPlayers);
@@ -51,6 +54,9 @@ public class YathzeeLobbyService {
     public YathzeeGame startGame(Long lobbyId) {
         YathzeeLobby lobby = lobbyRepository.findById(lobbyId)
                 .orElseThrow(() -> new IllegalArgumentException("Lobby not found."));
+        if (lobby.getStatus() != LobbyStatus.WAITING) {
+            throw new IllegalStateException("Game already started.");
+        }
         lobby.setStatus(LobbyStatus.IN_GAME);
         lobbyRepository.save(lobby);
         YathzeeGame game = new YathzeeGame();
