@@ -58,4 +58,12 @@ public class YathzeeExceptionHandler {
         error.setMessage(ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
+
+    @ExceptionHandler(NotEnoughPlayerException.class)
+    public ResponseEntity<ErrorEntity> handleNotEnoughPlayerException(NotEnoughPlayerException ex) {
+        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
+        error.setHttpStatus(HttpStatus.BAD_REQUEST.value());
+        error.setMessage(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
 }

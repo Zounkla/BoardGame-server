@@ -6,6 +6,7 @@ import com.boardgame.entity.yathzee.YathzeeLobby;
 import com.boardgame.exceptions.yathzee.*;
 import com.boardgame.service.yathzee.YathzeeLobbyService;
 import com.boardgame.mapper.yathzee.YathzeeMapper;
+import com.boardgame.utils.yathzee.YathzeeConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,7 +26,7 @@ public class YathzeeLobbyController {
 
     @PostMapping("/create")
     public ResponseEntity<YathzeeLobbyDTO> createLobby(@RequestParam String name,
-                                                       @RequestParam(defaultValue = "6") int maxPlayers)
+                                                       @RequestParam(defaultValue = "" + YathzeeConstants.MAX_PLAYERS) int maxPlayers)
             throws LobbyAlreadyExistsException {
         return ResponseEntity.ok(yathzeeMapper.toYathzeeLobbyDTO(lobbyService.createLobby(name, maxPlayers)));
     }
@@ -40,7 +41,7 @@ public class YathzeeLobbyController {
 
     @PostMapping("/{lobbyId}/start")
     public ResponseEntity<YathzeeGameDTO> startGame(@PathVariable Long lobbyId)
-            throws LobbyNotFoundException, GameStartedException {
+            throws LobbyNotFoundException, GameStartedException, NotEnoughPlayerException, LobbyFullException {
         return ResponseEntity.ok(yathzeeMapper.toYathzeeGameDTO(lobbyService.startGame(lobbyId)));
     }
 

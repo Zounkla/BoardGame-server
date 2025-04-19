@@ -1,6 +1,7 @@
 package com.boardgame.entity.yathzee;
 
 import com.boardgame.enums.lobby.LobbyStatus;
+import com.boardgame.utils.yathzee.YathzeeConstants;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -31,7 +32,7 @@ public class YathzeeLobby {
     private LobbyStatus status = LobbyStatus.WAITING;
 
     @Column(nullable = false)
-    private int maxPlayers = 6;
+    private int maxPlayers = YathzeeConstants.MAX_PLAYERS;
 
     public void addPlayer(YathzeePlayer player) {
         if (players.size() >= maxPlayers) {

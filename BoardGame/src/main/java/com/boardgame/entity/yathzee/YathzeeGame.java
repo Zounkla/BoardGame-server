@@ -1,5 +1,6 @@
 package com.boardgame.entity.yathzee;
 
+import com.boardgame.utils.yathzee.YathzeeConstants;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -31,5 +32,5 @@ public class YathzeeGame {
     @Column(name = "dice_value")
     private List<Integer> dices;
 
-    private int remainingRolls = 3;
+    private int remainingRolls = YathzeeConstants.MAX_ROLLS;
 }
