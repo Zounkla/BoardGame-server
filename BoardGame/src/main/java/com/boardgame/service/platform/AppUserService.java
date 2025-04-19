@@ -1,9 +1,9 @@
 package com.boardgame.service.platform;
 
 import com.boardgame.config.JwtUtils;
-import com.boardgame.dto.platform.AppUserDTO;
 import com.boardgame.dto.platform.LoginRequest;
 import com.boardgame.entity.platform.AppUser;
+import com.boardgame.exceptions.platform.InvalidCredentialsException;
 import com.boardgame.exceptions.platform.UserAlreadyRegisteredException;
 import com.boardgame.repository.platform.AppUserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -46,7 +46,7 @@ public class AppUserService {
         return user;
     }
 
-    public String login(LoginRequest loginRequest) {
+    public String login(LoginRequest loginRequest) throws InvalidCredentialsException {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
@@ -55,14 +55,7 @@ public class AppUserService {
             return jwtUtils.generateJwtToken(authentication);
 
         } catch (AuthenticationException e) {
-            throw new RuntimeException("Invalid username or password");
+            throw new InvalidCredentialsException("Invalid username or password");
         }
-    }
-
-    public AppUserDTO toDTO(AppUser user) {
-        AppUserDTO appUserDTO = new AppUserDTO();
-        appUserDTO.setUsername(user.getUsername());
-        appUserDTO.setRoles(user.getRoles());
-        return appUserDTO;
     }
 }
