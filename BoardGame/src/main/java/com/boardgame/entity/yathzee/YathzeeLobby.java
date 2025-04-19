@@ -1,0 +1,46 @@
+package com.boardgame.entity.yathzee;
+
+import com.boardgame.enums.lobby.LobbyStatus;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class YathzeeLobby {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String name;
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<YathzeePlayer> players = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    private LobbyStatus status = LobbyStatus.WAITING;
+
+    @Column(nullable = false)
+    private int maxPlayers = 6;
+
+    public void addPlayer(YathzeePlayer player) {
+        if (players.size() >= maxPlayers) {
+            throw new IllegalStateException("Lobby is full.");
+        }
+        players.add(player);
+    }
+
+    public void removePlayer(YathzeePlayer player) {
+        players.remove(player);
+    }
+}

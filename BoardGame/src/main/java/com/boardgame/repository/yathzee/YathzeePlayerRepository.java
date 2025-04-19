@@ -1,0 +1,9 @@
+package com.boardgame.repository.yathzee;
+
+import com.boardgame.entity.yathzee.YathzeePlayer;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface YathzeePlayerRepository extends JpaRepository<YathzeePlayer, Long> {
+}
