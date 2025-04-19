@@ -9,4 +9,4 @@ RUN mvn clean package -DskipTests
 FROM build AS dev
 WORKDIR /app
 COPY . .
-ENTRYPOINT ["./docker-entrypoint.sh"]
+ENTRYPOINT mvn spring-boot:run

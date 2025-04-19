@@ -1,9 +1,9 @@
 package com.boardgame.controller.platform;
 
-import com.boardgame.dto.platform.AppUserDTO;
 import com.boardgame.dto.platform.LoginRequest;
 import com.boardgame.entity.platform.AppUser;
 import com.boardgame.exceptions.platform.InvalidCredentialsException;
+import com.boardgame.exceptions.platform.InvalidLoginException;
 import com.boardgame.exceptions.platform.UserAlreadyRegisteredException;
 import com.boardgame.mapper.platform.AppUserMapper;
 import com.boardgame.service.platform.AppUserService;
