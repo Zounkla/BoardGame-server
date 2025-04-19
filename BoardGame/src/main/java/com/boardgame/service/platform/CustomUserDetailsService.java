@@ -2,7 +2,6 @@ package com.boardgame.service.platform;
 
 import com.boardgame.entity.platform.AppUser;
 import com.boardgame.repository.platform.AppUserRepository;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -25,11 +24,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         if (appUserOptional.isEmpty()) {
             throw new UsernameNotFoundException("User not found with username: " + username);
         }
-        AppUser appUser = appUserOptional.get();
-        return User.builder()
-                .username(appUser.getUsername())
-                .password(appUser.getPassword())
-                .roles(appUser.getRoles().toArray(new String[0]))
-                .build();
+        return appUserOptional.get();
     }
 }
