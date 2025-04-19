@@ -1,8 +1,10 @@
 package com.boardgame.controller.yathzee;
 
-import com.boardgame.entity.yathzee.YathzeeGame;
+import com.boardgame.dto.yathzee.YathzeeGameDTO;
+import com.boardgame.dto.yathzee.YathzeeLobbyDTO;
 import com.boardgame.entity.yathzee.YathzeeLobby;
 import com.boardgame.service.yathzee.YathzeeLobbyService;
+import com.boardgame.mapper.yathzee.YathzeeMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -10,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/lobbies/yathzee")
@@ -17,27 +20,32 @@ import java.util.List;
 public class YathzeeLobbyController {
 
     private final YathzeeLobbyService lobbyService;
+    private final YathzeeMapper yathzeeMapper;
 
     @PostMapping("/create")
-    public ResponseEntity<YathzeeLobby> createLobby(@RequestParam String name,
-                                                    @RequestParam(defaultValue = "6") int maxPlayers) {
-        return ResponseEntity.ok(lobbyService.createLobby(name, maxPlayers));
+    public ResponseEntity<YathzeeLobbyDTO> createLobby(@RequestParam String name,
+                                                       @RequestParam(defaultValue = "6") int maxPlayers) {
+        return ResponseEntity.ok(yathzeeMapper.toYathzeeLobbyDTO(lobbyService.createLobby(name, maxPlayers)));
     }
 
     @PostMapping("/{lobbyId}/join")
-    public ResponseEntity<YathzeeLobby> joinLobby(@PathVariable Long lobbyId) {
+    public ResponseEntity<YathzeeLobbyDTO> joinLobby(@PathVariable Long lobbyId) {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String username = ((UserDetails) principal).getUsername();
-        return ResponseEntity.ok(lobbyService.addPlayerToLobby(lobbyId, username));
+        return ResponseEntity.ok(yathzeeMapper.toYathzeeLobbyDTO(lobbyService.addPlayerToLobby(lobbyId, username)));
     }
 
     @PostMapping("/{lobbyId}/start")
-    public ResponseEntity<YathzeeGame> startGame(@PathVariable Long lobbyId) {
-        return ResponseEntity.ok(lobbyService.startGame(lobbyId));
+    public ResponseEntity<YathzeeGameDTO> startGame(@PathVariable Long lobbyId) {
+        return ResponseEntity.ok(yathzeeMapper.toYathzeeGameDTO(lobbyService.startGame(lobbyId)));
     }
 
     @GetMapping
-    public ResponseEntity<List<YathzeeLobby>> getAvailableLobbies() {
-        return ResponseEntity.ok(lobbyService.getAvailableLobbies());
+    public ResponseEntity<List<YathzeeLobbyDTO>> getAvailableLobbies() {
+        List<YathzeeLobby> lobbies = lobbyService.getAvailableLobbies();
+        List<YathzeeLobbyDTO> lobbiesDTO = lobbies.stream()
+                .map(yathzeeMapper::toYathzeeLobbyDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(lobbiesDTO);
     }
 }
