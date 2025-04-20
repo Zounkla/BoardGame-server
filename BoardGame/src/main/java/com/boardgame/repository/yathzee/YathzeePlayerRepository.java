@@ -9,5 +9,5 @@ import java.util.Optional;
 @Repository
 public interface YathzeePlayerRepository extends JpaRepository<YathzeePlayer, Long> {
 
-    Optional<YathzeePlayer> findByUser_Username(String username);
+    Optional<YathzeePlayer> findByUser_UsernameAndGame_Id(String username, Long gameId);
 }

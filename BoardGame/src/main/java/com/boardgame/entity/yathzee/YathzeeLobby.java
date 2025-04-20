@@ -25,7 +25,7 @@ public class YathzeeLobby {
     @Column(nullable = false, unique = true)
     private String name;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "lobby", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<YathzeePlayer> players = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
@@ -39,6 +39,7 @@ public class YathzeeLobby {
             throw new IllegalStateException("Lobby is full.");
         }
         players.add(player);
+        player.setLobby(this);
     }
 
     public void removePlayer(YathzeePlayer player) {

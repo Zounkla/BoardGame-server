@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Service
@@ -27,7 +26,8 @@ public class YathzeeService {
         YathzeeGame game = yathzeeGameRepository.findById(gameId).orElseThrow(
                 () -> new YathzeeGameNotFoundException("Game not found.")
         );
-        YathzeePlayer player = yathzeePlayerRepository.findByUser_Username(username).orElseThrow(
+        YathzeePlayer player = yathzeePlayerRepository.findByUser_UsernameAndGame_Id(username, game.getId())
+                .orElseThrow(
                 () -> new YathzeePlayerNotFoundException("Player not found.")
         );
         if (game.getActivePlayer() != player) {
