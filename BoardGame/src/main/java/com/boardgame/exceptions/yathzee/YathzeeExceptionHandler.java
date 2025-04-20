@@ -19,6 +19,38 @@ public class YathzeeExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
+    @ExceptionHandler(YathzeeGameNotFoundException.class)
+    public ResponseEntity<ErrorEntity> handleYathzeeGameNotFoundException(YathzeeGameNotFoundException ex) {
+        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
+        error.setHttpStatus(HttpStatus.NOT_FOUND.value());
+        error.setMessage(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @ExceptionHandler(YathzeePlayerNotFoundException.class)
+    public ResponseEntity<ErrorEntity> handleYathzeePlayerNotFoundException(YathzeePlayerNotFoundException ex) {
+        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
+        error.setHttpStatus(HttpStatus.NOT_FOUND.value());
+        error.setMessage(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @ExceptionHandler(YathzeeRollsException.class)
+    public ResponseEntity<ErrorEntity> handleYathzeeRollsException(YathzeeRollsException ex) {
+        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
+        error.setHttpStatus(HttpStatus.NOT_FOUND.value());
+        error.setMessage(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(YathzeeActivePlayerException.class)
+    public ResponseEntity<ErrorEntity> handleYathzeeActivePlayerException(YathzeeActivePlayerException ex) {
+        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
+        error.setHttpStatus(HttpStatus.NOT_FOUND.value());
+        error.setMessage(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
     @ExceptionHandler(LobbyInGameException.class)
     public ResponseEntity<ErrorEntity> handleLobbyInGameException(LobbyInGameException ex) {
         ErrorEntity error = new ErrorEntity(LocalDateTime.now());
