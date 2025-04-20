@@ -16,6 +16,12 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"user_id", "lobby_id"}),
+                @UniqueConstraint(columnNames = {"user_id", "game_id"})
+        }
+)
 public class YathzeePlayer {
 
     @Id
@@ -28,7 +34,12 @@ public class YathzeePlayer {
     @JoinColumn(name = "game_id")
     private YathzeeGame game;
 
-    @OneToOne
-    @JoinColumn(name = "user_id", unique = true)
+    @ManyToOne
+    @JoinColumn(name = "user_id")
     private AppUser user;
+
+    @ManyToOne
+    @JoinColumn(name = "lobby_id")
+    private YathzeeLobby lobby;
+
 }

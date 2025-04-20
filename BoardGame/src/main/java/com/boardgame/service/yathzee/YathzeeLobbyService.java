@@ -62,6 +62,7 @@ public class YathzeeLobbyService {
     @Transactional
     public YathzeeGame startGame(Long lobbyId) throws LobbyNotFoundException,
             GameStartedException, LobbyFullException, NotEnoughPlayerException {
+        // TODO faire en sorte que seul le créateur puisse lancer la game
         YathzeeLobby lobby = lobbyRepository.findById(lobbyId)
                 .orElseThrow(() -> new LobbyNotFoundException("Lobby not found."));
         if (lobby.getStatus() != LobbyStatus.WAITING) {
