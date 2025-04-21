@@ -11,6 +11,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @Setter
@@ -42,4 +45,6 @@ public class YathzeePlayer {
     @JoinColumn(name = "lobby_id")
     private YathzeeLobby lobby;
 
+    @OneToMany(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<YathzeePlayerBonus> bonuses = new ArrayList<>();
 }

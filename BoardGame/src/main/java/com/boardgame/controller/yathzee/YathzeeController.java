@@ -1,9 +1,11 @@
 package com.boardgame.controller.yathzee;
 
+import com.boardgame.dto.yathzee.YathzeeGameDTO;
 import com.boardgame.exceptions.yathzee.YathzeeActivePlayerException;
 import com.boardgame.exceptions.yathzee.YathzeeGameNotFoundException;
 import com.boardgame.exceptions.yathzee.YathzeePlayerNotFoundException;
 import com.boardgame.exceptions.yathzee.YathzeeRollsException;
+import com.boardgame.mapper.yathzee.YathzeeMapper;
 import com.boardgame.service.yathzee.YathzeeService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +21,14 @@ import java.util.List;
 public class YathzeeController {
 
     private final YathzeeService yathzeeService;
+    private final YathzeeMapper yathzeeMapper;
 
-    // TODO GET A GAME
+    @GetMapping("/{gameId}")
+    public ResponseEntity<YathzeeGameDTO> getGame(@PathVariable long gameId)
+            throws YathzeeGameNotFoundException {
+        return ResponseEntity.ok(yathzeeMapper.toYathzeeGameDTO(yathzeeService.getGame(gameId)));
+    }
+
     @PostMapping("/{gameId}/roll")
     public ResponseEntity<List<Integer>> rollDices(@PathVariable long gameId)
             throws YathzeeActivePlayerException, YathzeePlayerNotFoundException, YathzeeRollsException, YathzeeGameNotFoundException {

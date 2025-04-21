@@ -27,6 +27,12 @@ public class YathzeeLobbyService {
     private final AppUserRepository appUserRepository;
     private final YathzeeGameRepository yathzeeGameRepository;
 
+    public YathzeeLobby getLobby(Long lobbyId) throws LobbyNotFoundException {
+        return lobbyRepository.findById(lobbyId)
+                .orElseThrow(() -> new LobbyNotFoundException("Lobby not found.")
+        );
+    }
+
     @Transactional
     public YathzeeLobby createLobby(String name, int maxPlayers) throws LobbyAlreadyExistsException {
         if (lobbyRepository.findByName(name).isPresent()) {

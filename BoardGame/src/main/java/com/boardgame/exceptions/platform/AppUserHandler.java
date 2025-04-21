@@ -1,6 +1,6 @@
 package com.boardgame.exceptions.platform;
 
-import com.boardgame.entity.platform.Error.ErrorEntity;
+import com.boardgame.dto.ErrorResponse;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -21,28 +21,24 @@ import java.util.Map;
 @Primary
 public class AppUserHandler extends ResponseEntityExceptionHandler {
 
+    private ResponseEntity<ErrorResponse> createErrorResponse(Exception ex, HttpStatus status) {
+        ErrorResponse error = new ErrorResponse(LocalDateTime.now());
+        error.setHttpStatus(status.value());
+        error.setMessage(ex.getMessage());
+        return ResponseEntity.status(status).body(error);
+    }
+
     @ExceptionHandler(UserAlreadyRegisteredException.class)
-    public ResponseEntity<ErrorEntity> handleUserAlreadyRegisteredException(UserAlreadyRegisteredException ex) {
-        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
-        error.setHttpStatus(HttpStatus.CONFLICT.value());
-        error.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT.value()).body(error);
+    public ResponseEntity<ErrorResponse> handleUserAlreadyRegisteredException(UserAlreadyRegisteredException ex) {
+        return createErrorResponse(ex, HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler(InvalidLoginException.class)
-    public ResponseEntity<ErrorEntity> handleInvalidLoginException(InvalidLoginException ex) {
-        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
-        error.setHttpStatus(HttpStatus.UNAUTHORIZED.value());
-        error.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED.value()).body(error);
-    }
-
-    @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<ErrorEntity> handleInvalidCredentialsException(InvalidCredentialsException ex) {
-        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
-        error.setHttpStatus(HttpStatus.BAD_REQUEST.value());
-        error.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST.value()).body(error);
+    @ExceptionHandler({
+            InvalidLoginException.class,
+            InvalidCredentialsException.class
+    })
+    public ResponseEntity<ErrorResponse> handleUnauthorizedExceptions(Exception ex) {
+        return createErrorResponse(ex, HttpStatus.UNAUTHORIZED);
     }
 
     @Override

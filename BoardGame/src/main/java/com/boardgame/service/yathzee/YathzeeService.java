@@ -20,6 +20,12 @@ public class YathzeeService {
     private final YathzeeGameRepository yathzeeGameRepository;
     private final YathzeePlayerRepository yathzeePlayerRepository;
 
+    public YathzeeGame getGame(long gameId) throws YathzeeGameNotFoundException {
+        return yathzeeGameRepository.findById(gameId).orElseThrow(
+                () -> new YathzeeGameNotFoundException("Game not found.")
+        );
+    }
+
     @Transactional
     public List<Integer> rollDices(long gameId, String username)
             throws YathzeeGameNotFoundException, YathzeeRollsException, YathzeeActivePlayerException, YathzeePlayerNotFoundException {

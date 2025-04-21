@@ -1,6 +1,6 @@
 package com.boardgame.exceptions.yathzee;
 
-import com.boardgame.entity.platform.Error.ErrorEntity;
+import com.boardgame.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -11,91 +11,33 @@ import java.time.LocalDateTime;
 @ControllerAdvice
 public class YathzeeExceptionHandler {
 
-    @ExceptionHandler(LobbyNotFoundException.class)
-    public ResponseEntity<ErrorEntity> handleLobbyNotFoundException(LobbyNotFoundException ex) {
-        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
-        error.setHttpStatus(HttpStatus.NOT_FOUND.value());
+    private ResponseEntity<ErrorResponse> createErrorResponse(Exception ex, HttpStatus status) {
+        ErrorResponse error = new ErrorResponse(LocalDateTime.now());
+        error.setHttpStatus(status.value());
         error.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        return ResponseEntity.status(status).body(error);
     }
 
-    @ExceptionHandler(YathzeeGameNotFoundException.class)
-    public ResponseEntity<ErrorEntity> handleYathzeeGameNotFoundException(YathzeeGameNotFoundException ex) {
-        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
-        error.setHttpStatus(HttpStatus.NOT_FOUND.value());
-        error.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    @ExceptionHandler({
+            LobbyNotFoundException.class,
+            YathzeeGameNotFoundException.class,
+            YathzeePlayerNotFoundException.class
+    })
+    public ResponseEntity<ErrorResponse> handleNotFoundExceptions(Exception ex) {
+        return createErrorResponse(ex, HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(YathzeePlayerNotFoundException.class)
-    public ResponseEntity<ErrorEntity> handleYathzeePlayerNotFoundException(YathzeePlayerNotFoundException ex) {
-        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
-        error.setHttpStatus(HttpStatus.NOT_FOUND.value());
-        error.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-    }
-
-    @ExceptionHandler(YathzeeRollsException.class)
-    public ResponseEntity<ErrorEntity> handleYathzeeRollsException(YathzeeRollsException ex) {
-        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
-        error.setHttpStatus(HttpStatus.NOT_FOUND.value());
-        error.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
-    @ExceptionHandler(YathzeeActivePlayerException.class)
-    public ResponseEntity<ErrorEntity> handleYathzeeActivePlayerException(YathzeeActivePlayerException ex) {
-        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
-        error.setHttpStatus(HttpStatus.NOT_FOUND.value());
-        error.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
-    @ExceptionHandler(LobbyInGameException.class)
-    public ResponseEntity<ErrorEntity> handleLobbyInGameException(LobbyInGameException ex) {
-        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
-        error.setHttpStatus(HttpStatus.BAD_REQUEST.value());
-        error.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
-    @ExceptionHandler(PlayerAlreadyInLobbyException.class)
-    public ResponseEntity<ErrorEntity> handlePlayerAlreadyInLobbyException(PlayerAlreadyInLobbyException ex) {
-        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
-        error.setHttpStatus(HttpStatus.BAD_REQUEST.value());
-        error.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
-    @ExceptionHandler(LobbyFullException.class)
-    public ResponseEntity<ErrorEntity> handleLobbyFullException(LobbyFullException ex) {
-        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
-        error.setHttpStatus(HttpStatus.BAD_REQUEST.value());
-        error.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
-    @ExceptionHandler(GameStartedException.class)
-    public ResponseEntity<ErrorEntity> handleGameStartedException(GameStartedException ex) {
-        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
-        error.setHttpStatus(HttpStatus.BAD_REQUEST.value());
-        error.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
-    @ExceptionHandler(LobbyAlreadyExistsException.class)
-    public ResponseEntity<ErrorEntity> handleLobbyAlreadyExistsException(LobbyAlreadyExistsException ex) {
-        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
-        error.setHttpStatus(HttpStatus.BAD_REQUEST.value());
-        error.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
-    @ExceptionHandler(NotEnoughPlayerException.class)
-    public ResponseEntity<ErrorEntity> handleNotEnoughPlayerException(NotEnoughPlayerException ex) {
-        ErrorEntity error = new ErrorEntity(LocalDateTime.now());
-        error.setHttpStatus(HttpStatus.BAD_REQUEST.value());
-        error.setMessage(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    @ExceptionHandler({
+            YathzeeRollsException.class,
+            YathzeeActivePlayerException.class,
+            LobbyInGameException.class,
+            PlayerAlreadyInLobbyException.class,
+            LobbyFullException.class,
+            GameStartedException.class,
+            LobbyAlreadyExistsException.class,
+            NotEnoughPlayerException.class
+    })
+    public ResponseEntity<ErrorResponse> handleBadRequestExceptions(Exception ex) {
+        return createErrorResponse(ex, HttpStatus.BAD_REQUEST);
     }
 }

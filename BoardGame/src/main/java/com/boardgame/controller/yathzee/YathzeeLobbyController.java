@@ -24,6 +24,12 @@ public class YathzeeLobbyController {
     private final YathzeeLobbyService lobbyService;
     private final YathzeeMapper yathzeeMapper;
 
+    @GetMapping("/{lobbyId}")
+    public ResponseEntity<YathzeeLobbyDTO> getLobby(@PathVariable long lobbyId)
+            throws LobbyNotFoundException {
+        return ResponseEntity.ok(yathzeeMapper.toYathzeeLobbyDTO(lobbyService.getLobby(lobbyId)));
+    }
+
     @PostMapping("/create")
     public ResponseEntity<YathzeeLobbyDTO> createLobby(@RequestParam String name,
                                                        @RequestParam(defaultValue = "" + YathzeeConstants.MAX_PLAYERS) int maxPlayers)
