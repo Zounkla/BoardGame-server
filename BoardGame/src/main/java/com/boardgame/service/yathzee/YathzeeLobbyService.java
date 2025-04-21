@@ -53,7 +53,7 @@ public class YathzeeLobbyService {
             throw new LobbyInGameException("Cannot join a lobby that is already in-game.");
         }
         if (lobby.getPlayers().stream().anyMatch(player -> player.getUser().getUsername().equals(playerName))) {
-            throw new PlayerAlreadyInLobbyException("Player " + playerName + " is already in a lobby.");
+            throw new PlayerAlreadyInLobbyException("Player " + playerName + " is already in this lobby.");
         }
         if (lobby.getPlayers().size() == lobby.getMaxPlayers()) {
             throw new LobbyFullException("Lobby is full.");

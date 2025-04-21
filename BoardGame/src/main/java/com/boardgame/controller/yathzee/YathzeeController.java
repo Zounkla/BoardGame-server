@@ -1,10 +1,7 @@
 package com.boardgame.controller.yathzee;
 
 import com.boardgame.dto.yathzee.YathzeeGameDTO;
-import com.boardgame.exceptions.yathzee.YathzeeActivePlayerException;
-import com.boardgame.exceptions.yathzee.YathzeeGameNotFoundException;
-import com.boardgame.exceptions.yathzee.YathzeePlayerNotFoundException;
-import com.boardgame.exceptions.yathzee.YathzeeRollsException;
+import com.boardgame.exceptions.yathzee.*;
 import com.boardgame.mapper.yathzee.YathzeeMapper;
 import com.boardgame.service.yathzee.YathzeeService;
 import lombok.AllArgsConstructor;
@@ -34,10 +31,17 @@ public class YathzeeController {
             throws YathzeeActivePlayerException, YathzeePlayerNotFoundException, YathzeeRollsException, YathzeeGameNotFoundException {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String username = ((UserDetails) principal).getUsername();
-
-        List<Integer> result = yathzeeService.rollDices(gameId, username);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(yathzeeService.rollDices(gameId, username));
     }
 
-    // TODO CHOOSE BONUS
+    @PostMapping("/{gameId}/choose/{bonusIndex}")
+    public ResponseEntity<Integer> chooseBonus(@PathVariable long gameId,
+                                                   @PathVariable int bonusIndex)
+            throws YathzeePlayerNotFoundException, YathzeeActivePlayerException, YathzeeBonusIndexException,
+            YathzeeGameNotFoundException, YathzeeBonusAlreadyChosenException {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username = ((UserDetails) principal).getUsername();
+
+        return ResponseEntity.ok(yathzeeService.chooseBonus(gameId, username, bonusIndex));
+    }
 }
