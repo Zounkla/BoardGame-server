@@ -12,8 +12,8 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Service
@@ -55,7 +55,7 @@ public class YathzeeService {
     @Transactional
     public int chooseBonus(long gameId, String username, int yathzeeBonusIndex)
             throws YathzeeGameNotFoundException, YathzeePlayerNotFoundException, YathzeeActivePlayerException,
-            YathzeeBonusIndexException, YathzeeBonusAlreadyChosenException {
+            YathzeeBonusIndexException, YathzeeBonusAlreadyChosenException, YathzeeBonusNotFoundException {
         YathzeeGame game = yathzeeGameRepository.findById(gameId).orElseThrow(
                 () -> new YathzeeGameNotFoundException("Game not found.")
         );
@@ -98,31 +98,89 @@ public class YathzeeService {
         game.setDices(result);
     }
 
-    private int computePoints(YathzeePlayer player, YathzeeBonus bonus) {
+    private int computePoints(YathzeePlayer player, YathzeeBonus bonus) throws YathzeeBonusNotFoundException {
         YathzeeGame yathzeeGame = player.getGame();
         List<Integer> dices = yathzeeGame.getDices();
         switch (bonus) {
             case SUM_OF_ONE -> {
-                return dices.stream().filter(dice -> dice == 1).toList().size();
+                return computeSimplePoints(dices, 1);
             }
             case SUM_OF_TWO -> {
-                return 2 * dices.stream().filter(dice -> dice == 2).toList().size();
+                return computeSimplePoints(dices, 2);
             }
             case SUM_OF_THREE -> {
-                return 3 * dices.stream().filter(dice -> dice == 3).toList().size();
+                return computeSimplePoints(dices, 3);
             }
             case SUM_OF_FOUR -> {
-                return 4 * dices.stream().filter(dice -> dice == 4).toList().size();
+                return computeSimplePoints(dices, 4);
             }
             case SUM_OF_FIVE -> {
-                return 5 * dices.stream().filter(dice -> dice == 5).toList().size();
+                return computeSimplePoints(dices, 5);
             }
             case SUM_OF_SIX -> {
-                return 6 * dices.stream().filter(dice -> dice == 6).toList().size();
+                return computeSimplePoints(dices, 6);
             }
-            default -> {
-                return 0;
+            case THREE_OF_KIND -> {
+                return getNOfKind(dices, 3);
             }
+            case FOUR_OF_KIND -> {
+                return getNOfKind(dices, 4);
+            }
+            case FULL_HOUSE -> {
+                return fullHouse(dices);
+            }
+            case SM_STRAIGHT ->  {
+                return smallStraight(dices);
+            }
+            case LG_STRAIGHT -> {
+                return largeStraight(dices);
+            }
+            case YATHZEE -> {
+                return getNOfKind(dices, 5);
+            }
+            case CHANCE -> {
+                return dices.stream().mapToInt(Integer::intValue).sum();
+            }
+            default -> throw new YathzeeBonusNotFoundException("This bonus does not exist");
         }
+    }
+
+    private int smallStraight(List<Integer> dices) {
+            Set<Integer> unique = new HashSet<>(dices);
+            return (unique.containsAll(List.of(1, 2, 3, 4)) ||
+                    unique.containsAll(List.of(2, 3, 4, 5)) ||
+                    unique.containsAll(List.of(3, 4, 5, 6)))
+                    ? 20 : 0;
+    }
+
+    private int largeStraight(List<Integer> dices) {
+        Set<Integer> unique = new HashSet<>(dices);
+        return (unique.containsAll(List.of(1, 2, 3, 4, 5)) ||
+                unique.containsAll(List.of(2, 3, 4, 5, 6)))
+                ? 40 : 0;
+    }
+
+    private int computeSimplePoints(List<Integer> dices, int number) {
+        return number * dices.stream().filter(dice -> dice == number).toList().size();
+    }
+
+    private int getNOfKind(List<Integer> dices, int n) {
+        Integer value = dices.stream()
+                .filter(d -> Collections.frequency(dices, d) >= n)
+                .findFirst()
+                .orElse(null);
+        return value != null ? value * n : 0;
+    }
+
+    private int fullHouse(List<Integer> dices) {
+        int threeOfKind = getNOfKind(dices, 3) / 3;
+        if (threeOfKind == 0) {
+            return 0;
+        }
+
+        List<Integer> remaining = dices.stream()
+                .filter(d -> !Objects.equals(d, threeOfKind))
+                .collect(Collectors.toList());
+        return getNOfKind(remaining, 2) > 0 ? 25 : 0;
     }
 }

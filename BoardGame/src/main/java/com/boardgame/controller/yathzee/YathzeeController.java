@@ -38,7 +38,7 @@ public class YathzeeController {
     public ResponseEntity<Integer> chooseBonus(@PathVariable long gameId,
                                                    @PathVariable int bonusIndex)
             throws YathzeePlayerNotFoundException, YathzeeActivePlayerException, YathzeeBonusIndexException,
-            YathzeeGameNotFoundException, YathzeeBonusAlreadyChosenException {
+            YathzeeGameNotFoundException, YathzeeBonusAlreadyChosenException, YathzeeBonusNotFoundException {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String username = ((UserDetails) principal).getUsername();
 
