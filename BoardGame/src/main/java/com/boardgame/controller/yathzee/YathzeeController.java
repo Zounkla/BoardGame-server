@@ -29,6 +29,8 @@ public class YathzeeController {
     @PostMapping("/{gameId}/roll")
     public ResponseEntity<List<Integer>> rollDices(@PathVariable long gameId)
             throws YathzeeActivePlayerException, YathzeePlayerNotFoundException, YathzeeRollsException, YathzeeGameNotFoundException {
+
+        //TODO Laisser le choix à l'utilisateur de roll seulement certains dés
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String username = ((UserDetails) principal).getUsername();
         return ResponseEntity.ok(yathzeeService.rollDices(gameId, username));

@@ -8,6 +8,7 @@ import com.boardgame.exceptions.yathzee.*;
 import com.boardgame.repository.yathzee.YathzeeGameRepository;
 import com.boardgame.repository.yathzee.YathzeePlayerBonusRepository;
 import com.boardgame.repository.yathzee.YathzeePlayerRepository;
+import com.boardgame.utils.yathzee.YathzeeConstants;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -76,12 +77,22 @@ public class YathzeeService {
         YathzeePlayerBonus yathzeePlayerBonus = new YathzeePlayerBonus();
         yathzeePlayerBonus.setPlayer(player);
         yathzeePlayerBonus.setBonus(bonus);
+        int oldSimpleScore = getSumOfSimple(player);
+        boolean hasYathzee = player.hasYathzee();
         int score = computePoints(player, bonus);
+        yathzeePlayerBonus.setScore(score);
+        int newSimpleScore = getSumOfSimple(player);
+        if (oldSimpleScore < YathzeeConstants.SIMPLE_SUM_LIMIT && newSimpleScore >= YathzeeConstants.SIMPLE_SUM_LIMIT) {
+            score += YathzeeConstants.SIMPLE_SUM_BONUS;
+        }
+        if (hasYathzee) {
+            score += YathzeeConstants.YATHZEE_BONUS;
+        }
+        if (bonus == YathzeeBonus.YATHZEE) {
+            player.setHasYathzee(true);
+        }
         player.setScore(player.getScore() + score);
-        // TODO Check si somme des 1, 2, ..., 6 >= 63 alors bonus mais qu'une fois (oldSomme < et newSomme >=) (à check)
-        // TODO pour Yathzee, si pas première fois, donner 50 en plus ? (à check la vraie règle)
-
-        //TODO GERER FIN DE TOUR
+        changeActivePlayer(game);
         return score;
     }
 
@@ -182,5 +193,41 @@ public class YathzeeService {
                 .filter(d -> !Objects.equals(d, threeOfKind))
                 .collect(Collectors.toList());
         return getNOfKind(remaining, 2) > 0 ? 25 : 0;
+    }
+
+    private void changeActivePlayer(YathzeeGame game) {
+        List<YathzeePlayer> players = game.getPlayers();
+        int index = players.indexOf(game.getActivePlayer());
+        int newIndex = (index +  1)% players.size();
+        YathzeePlayer newPlayer = players.get(newIndex);
+        game.setActivePlayer(newPlayer);
+        yathzeeGameRepository.save(game);
+        checkEndOfGame(game);
+    }
+
+    private void checkEndOfGame(YathzeeGame game) {
+        if (game.getPlayers().stream().allMatch(this::playerHasFinished)) {
+            game.setGameOver(true);
+            yathzeeGameRepository.save(game);
+        }
+    }
+
+    private boolean playerHasFinished(YathzeePlayer player) {
+        return player.getBonuses().size() == YathzeeBonus.values().length;
+    }
+
+    private int getSumOfSimple(YathzeePlayer player) {
+        List<YathzeePlayerBonus> playerBonuses = player.getBonuses();
+        int simpleScoreSum = 0;
+        for (YathzeePlayerBonus playerBonus : playerBonuses) {
+            switch (playerBonus.getBonus()) {
+                case SUM_OF_ONE, SUM_OF_TWO, SUM_OF_THREE, SUM_OF_FOUR, SUM_OF_FIVE, SUM_OF_SIX:
+                    simpleScoreSum += playerBonus.getScore();
+                    break;
+                default:
+                    break;
+            }
+        }
+        return simpleScoreSum;
     }
 }

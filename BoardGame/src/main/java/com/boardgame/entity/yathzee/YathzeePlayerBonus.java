@@ -27,4 +27,6 @@ public class YathzeePlayerBonus {
     @ManyToOne(optional = false)
     @JoinColumn(name = "player_id")
     private YathzeePlayer player;
+
+    private int score;
 }
