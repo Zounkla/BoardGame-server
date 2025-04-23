@@ -41,6 +41,7 @@ public class YathzeeExceptionHandler {
             YathzeeBonusAlreadyChosenException.class,
             YathzeeDicesNotRolledException.class,
             YathzeeGameOverException.class,
+            YathzeeDiceInvalidIndexesException.class,
     })
     public ResponseEntity<ErrorResponse> handleBadRequestExceptions(Exception ex) {
         return createErrorResponse(ex, HttpStatus.BAD_REQUEST);

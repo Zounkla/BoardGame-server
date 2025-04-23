@@ -32,9 +32,9 @@ public class YathzeeService {
     }
 
     @Transactional
-    public List<Integer> rollDices(long gameId, String username)
+    public List<Integer> rollDices(long gameId, String username, List<Integer> diceIndexesToRoll)
             throws YathzeeGameNotFoundException, YathzeeRollsException, YathzeeActivePlayerException,
-            YathzeePlayerNotFoundException, YathzeeGameOverException {
+            YathzeePlayerNotFoundException, YathzeeGameOverException, YathzeeDiceInvalidIndexesException {
         YathzeeGame game = getGame(gameId);
         YathzeePlayer player = getPlayer(username, game);
         if (game.isGameOver()) {
@@ -46,9 +46,22 @@ public class YathzeeService {
         if (game.getRemainingRolls() == 0) {
             throw new YathzeeRollsException("Player can't roll anymore");
         }
-        clearOldDices(game);
+        if (!isValidDiceIndexes(diceIndexesToRoll)) {
+            throw new YathzeeDiceInvalidIndexesException("Invalid dice indexes");
+        }
+        List<Integer> currentDices = game.getDices();
+
+        if (currentDices.isEmpty()) {
+            currentDices = IntStream.range(0, 5).mapToObj(i -> 0).collect(Collectors.toList());
+        }
+
+        Random random = new Random();
+        for (Integer index : diceIndexesToRoll) {
+            currentDices.set(index, random.nextInt(6) + 1);
+        }
+
         game.setRemainingRolls(game.getRemainingRolls() - 1);
-        throwDices(game);
+        game.setDices(currentDices);
         return game.getDices();
     }
 
@@ -111,15 +124,6 @@ public class YathzeeService {
 
     private void clearOldDices(YathzeeGame game) {
         game.getDices().clear();
-    }
-
-    private void throwDices(YathzeeGame game) {
-        Random random = new Random();
-        List<Integer> result = IntStream.range(0, 5)
-                .map(i -> random.nextInt(6) + 1)
-                .boxed()
-                .toList();
-        game.setDices(result);
     }
 
     private int computePoints(YathzeePlayer player, YathzeeBonus bonus) throws YathzeeBonusNotFoundException {
@@ -246,5 +250,10 @@ public class YathzeeService {
             }
         }
         return simpleScoreSum;
+    }
+
+    private boolean isValidDiceIndexes(List<Integer> indexes) {
+        return indexes != null &&
+                indexes.stream().allMatch(i -> i >= 0 && i < 5);
     }
 }

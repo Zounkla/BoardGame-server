@@ -1,6 +1,7 @@
 package com.boardgame.controller.yathzee;
 
 import com.boardgame.dto.yathzee.YathzeeGameDTO;
+import com.boardgame.dto.yathzee.YathzeeRollDiceRequestDTO;
 import com.boardgame.exceptions.yathzee.*;
 import com.boardgame.mapper.yathzee.YathzeeMapper;
 import com.boardgame.service.yathzee.YathzeeService;
@@ -10,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -27,14 +29,16 @@ public class YathzeeController {
     }
 
     @PostMapping("/{gameId}/roll")
-    public ResponseEntity<List<Integer>> rollDices(@PathVariable long gameId)
+    public ResponseEntity<List<Integer>> rollDices(@PathVariable long gameId,
+                                                   @RequestBody YathzeeRollDiceRequestDTO yathzeeRollDiceRequestDTO)
             throws YathzeeActivePlayerException, YathzeePlayerNotFoundException, YathzeeRollsException,
-            YathzeeGameNotFoundException, YathzeeGameOverException {
-
-        //TODO Laisser le choix à l'utilisateur de roll seulement certains dés
+            YathzeeGameNotFoundException, YathzeeGameOverException, YathzeeDiceInvalidIndexesException {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String username = ((UserDetails) principal).getUsername();
-        return ResponseEntity.ok(yathzeeService.rollDices(gameId, username));
+        List<Integer> diceIndexes = yathzeeRollDiceRequestDTO == null || isNullOrEmpty(yathzeeRollDiceRequestDTO.getDiceIndexes())
+                ? new ArrayList<>()
+                : yathzeeRollDiceRequestDTO.getDiceIndexes();
+        return ResponseEntity.ok(yathzeeService.rollDices(gameId, username, diceIndexes));
     }
 
     @PostMapping("/{gameId}/choose/{bonusIndex}")
@@ -47,5 +51,9 @@ public class YathzeeController {
         String username = ((UserDetails) principal).getUsername();
 
         return ResponseEntity.ok(yathzeeService.chooseBonus(gameId, username, bonusIndex));
+    }
+
+    private boolean isNullOrEmpty(List<Integer> list) {
+        return list == null || list.isEmpty();
     }
 }
