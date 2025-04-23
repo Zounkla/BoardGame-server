@@ -33,14 +33,13 @@ public class YathzeeService {
 
     @Transactional
     public List<Integer> rollDices(long gameId, String username)
-            throws YathzeeGameNotFoundException, YathzeeRollsException, YathzeeActivePlayerException, YathzeePlayerNotFoundException {
-        YathzeeGame game = yathzeeGameRepository.findById(gameId).orElseThrow(
-                () -> new YathzeeGameNotFoundException("Game not found.")
-        );
-        YathzeePlayer player = yathzeePlayerRepository.findByUser_UsernameAndGame_Id(username, game.getId())
-                .orElseThrow(
-                        () -> new YathzeePlayerNotFoundException("Player not found.")
-                );
+            throws YathzeeGameNotFoundException, YathzeeRollsException, YathzeeActivePlayerException,
+            YathzeePlayerNotFoundException, YathzeeGameOverException {
+        YathzeeGame game = getGame(gameId);
+        YathzeePlayer player = getPlayer(username, game);
+        if (game.isGameOver()) {
+            throw new YathzeeGameOverException("Game is over");
+        }
         if (game.getActivePlayer() != player) {
             throw new YathzeeActivePlayerException("Not active player.");
         }
@@ -56,19 +55,21 @@ public class YathzeeService {
     @Transactional
     public int chooseBonus(long gameId, String username, int yathzeeBonusIndex)
             throws YathzeeGameNotFoundException, YathzeePlayerNotFoundException, YathzeeActivePlayerException,
-            YathzeeBonusIndexException, YathzeeBonusAlreadyChosenException, YathzeeBonusNotFoundException {
-        YathzeeGame game = yathzeeGameRepository.findById(gameId).orElseThrow(
-                () -> new YathzeeGameNotFoundException("Game not found.")
-        );
-        YathzeePlayer player = yathzeePlayerRepository.findByUser_UsernameAndGame_Id(username, game.getId())
-                .orElseThrow(
-                        () -> new YathzeePlayerNotFoundException("Player not found.")
-                );
+            YathzeeBonusIndexException, YathzeeBonusAlreadyChosenException, YathzeeBonusNotFoundException, 
+            YathzeeDicesNotRolledException, YathzeeGameOverException {
+        YathzeeGame game = getGame(gameId);
+        YathzeePlayer player = getPlayer(username, game);
+        if (game.isGameOver()) {
+            throw new YathzeeGameOverException("Game is over");
+        }
         if (game.getActivePlayer() != player) {
             throw new YathzeeActivePlayerException("Not active player.");
         }
         if (yathzeeBonusIndex < 0 || yathzeeBonusIndex >= YathzeeBonus.values().length) {
             throw new YathzeeBonusIndexException("Invalid bonus index.");
+        }
+        if (game.getDices().isEmpty()) {
+            throw new YathzeeDicesNotRolledException("Must roll dices before choosing a bonus");
         }
         YathzeeBonus bonus = YathzeeBonus.values()[yathzeeBonusIndex];
         if (yathzeePlayerBonusRepository.existsYathzeePlayerBonusByPlayerAndBonus(player, bonus)) {
@@ -77,6 +78,7 @@ public class YathzeeService {
         YathzeePlayerBonus yathzeePlayerBonus = new YathzeePlayerBonus();
         yathzeePlayerBonus.setPlayer(player);
         yathzeePlayerBonus.setBonus(bonus);
+        player.getBonuses().add(yathzeePlayerBonus);
         int oldSimpleScore = getSumOfSimple(player);
         boolean hasYathzee = player.hasYathzee();
         int score = computePoints(player, bonus);
@@ -85,15 +87,26 @@ public class YathzeeService {
         if (oldSimpleScore < YathzeeConstants.SIMPLE_SUM_LIMIT && newSimpleScore >= YathzeeConstants.SIMPLE_SUM_LIMIT) {
             score += YathzeeConstants.SIMPLE_SUM_BONUS;
         }
-        if (hasYathzee) {
-            score += YathzeeConstants.YATHZEE_BONUS;
-        }
-        if (bonus == YathzeeBonus.YATHZEE) {
-            player.setHasYathzee(true);
+        if (canYathzee(game.getDices())) {
+            if (hasYathzee) {
+                score += YathzeeConstants.YATHZEE_BONUS;
+            }
+            if (bonus == YathzeeBonus.YATHZEE) {
+                player.setHasYathzee(true);
+            }
         }
         player.setScore(player.getScore() + score);
         changeActivePlayer(game);
+        yathzeePlayerRepository.save(player);
+        yathzeeGameRepository.save(game);
         return score;
+    }
+
+    private YathzeePlayer getPlayer(String username, YathzeeGame game) throws YathzeePlayerNotFoundException {
+        return yathzeePlayerRepository.findByUser_UsernameAndGame_Id(username, game.getId())
+                .orElseThrow(
+                        () -> new YathzeePlayerNotFoundException("Player not found.")
+                );
     }
 
     private void clearOldDices(YathzeeGame game) {
@@ -183,6 +196,10 @@ public class YathzeeService {
         return value != null ? value * n : 0;
     }
 
+    private boolean canYathzee(List<Integer> dices) {
+        return getNOfKind(dices, 5) != 0;
+    }
+
     private int fullHouse(List<Integer> dices) {
         int threeOfKind = getNOfKind(dices, 3) / 3;
         if (threeOfKind == 0) {
@@ -201,14 +218,14 @@ public class YathzeeService {
         int newIndex = (index +  1)% players.size();
         YathzeePlayer newPlayer = players.get(newIndex);
         game.setActivePlayer(newPlayer);
-        yathzeeGameRepository.save(game);
+        game.setRemainingRolls(YathzeeConstants.MAX_ROLLS);
+        clearOldDices(game);
         checkEndOfGame(game);
     }
 
     private void checkEndOfGame(YathzeeGame game) {
         if (game.getPlayers().stream().allMatch(this::playerHasFinished)) {
             game.setGameOver(true);
-            yathzeeGameRepository.save(game);
         }
     }
 

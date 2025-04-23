@@ -28,7 +28,8 @@ public class YathzeeController {
 
     @PostMapping("/{gameId}/roll")
     public ResponseEntity<List<Integer>> rollDices(@PathVariable long gameId)
-            throws YathzeeActivePlayerException, YathzeePlayerNotFoundException, YathzeeRollsException, YathzeeGameNotFoundException {
+            throws YathzeeActivePlayerException, YathzeePlayerNotFoundException, YathzeeRollsException,
+            YathzeeGameNotFoundException, YathzeeGameOverException {
 
         //TODO Laisser le choix à l'utilisateur de roll seulement certains dés
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -40,7 +41,8 @@ public class YathzeeController {
     public ResponseEntity<Integer> chooseBonus(@PathVariable long gameId,
                                                    @PathVariable int bonusIndex)
             throws YathzeePlayerNotFoundException, YathzeeActivePlayerException, YathzeeBonusIndexException,
-            YathzeeGameNotFoundException, YathzeeBonusAlreadyChosenException, YathzeeBonusNotFoundException {
+            YathzeeGameNotFoundException, YathzeeBonusAlreadyChosenException, YathzeeBonusNotFoundException,
+            YathzeeDicesNotRolledException, YathzeeGameOverException {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String username = ((UserDetails) principal).getUsername();
 

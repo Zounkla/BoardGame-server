@@ -38,7 +38,9 @@ public class YathzeeExceptionHandler {
             LobbyAlreadyExistsException.class,
             NotEnoughPlayerException.class,
             YathzeeBonusIndexException.class,
-            YathzeeBonusAlreadyChosenException.class
+            YathzeeBonusAlreadyChosenException.class,
+            YathzeeDicesNotRolledException.class,
+            YathzeeGameOverException.class,
     })
     public ResponseEntity<ErrorResponse> handleBadRequestExceptions(Exception ex) {
         return createErrorResponse(ex, HttpStatus.BAD_REQUEST);
