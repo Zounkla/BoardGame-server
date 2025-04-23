@@ -21,8 +21,7 @@ public class YathzeeExceptionHandler {
     @ExceptionHandler({
             LobbyNotFoundException.class,
             YathzeeGameNotFoundException.class,
-            YathzeePlayerNotFoundException.class,
-            YathzeeBonusNotFoundException.class
+            YathzeePlayerNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFoundExceptions(Exception ex) {
         return createErrorResponse(ex, HttpStatus.NOT_FOUND);

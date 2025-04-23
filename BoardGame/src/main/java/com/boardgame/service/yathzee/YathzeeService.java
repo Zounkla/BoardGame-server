@@ -1,5 +1,6 @@
 package com.boardgame.service.yathzee;
 
+import com.boardgame.dto.yathzee.YathzeeBonusPreviewDTO;
 import com.boardgame.entity.yathzee.YathzeeGame;
 import com.boardgame.entity.yathzee.YathzeePlayer;
 import com.boardgame.entity.yathzee.YathzeePlayerBonus;
@@ -26,9 +27,8 @@ public class YathzeeService {
     private final YathzeePlayerBonusRepository yathzeePlayerBonusRepository;
 
     public YathzeeGame getGame(long gameId) throws YathzeeGameNotFoundException {
-        return yathzeeGameRepository.findById(gameId).orElseThrow(
-                () -> new YathzeeGameNotFoundException("Game not found.")
-        );
+        return yathzeeGameRepository.findById(gameId)
+                .orElseThrow(() -> new YathzeeGameNotFoundException("Game not found."));
     }
 
     @Transactional
@@ -37,23 +37,15 @@ public class YathzeeService {
             YathzeePlayerNotFoundException, YathzeeGameOverException, YathzeeDiceInvalidIndexesException {
         YathzeeGame game = getGame(gameId);
         YathzeePlayer player = getPlayer(username, game);
-        if (game.isGameOver()) {
-            throw new YathzeeGameOverException("Game is over");
-        }
-        if (game.getActivePlayer() != player) {
-            throw new YathzeeActivePlayerException("Not active player.");
-        }
-        if (game.getRemainingRolls() == 0) {
-            throw new YathzeeRollsException("Player can't roll anymore");
-        }
-        if (!isValidDiceIndexes(diceIndexesToRoll)) {
-            throw new YathzeeDiceInvalidIndexesException("Invalid dice indexes");
-        }
-        List<Integer> currentDices = game.getDices();
 
-        if (currentDices.isEmpty()) {
-            currentDices = IntStream.range(0, 5).mapToObj(i -> 0).collect(Collectors.toList());
-        }
+        if (game.isGameOver()) throw new YathzeeGameOverException("Game is over");
+        if (!game.getActivePlayer().equals(player)) throw new YathzeeActivePlayerException("Not active player.");
+        if (game.getRemainingRolls() == 0) throw new YathzeeRollsException("No rolls left.");
+        if (!isValidDiceIndexes(diceIndexesToRoll)) throw new YathzeeDiceInvalidIndexesException("Invalid dice indexes");
+
+        List<Integer> currentDices = game.getDices().isEmpty()
+                ? IntStream.range(0, 5).mapToObj(i -> 0).collect(Collectors.toList())
+                : new ArrayList<>(game.getDices());
 
         Random random = new Random();
         for (Integer index : diceIndexesToRoll) {
@@ -62,142 +54,141 @@ public class YathzeeService {
 
         game.setRemainingRolls(game.getRemainingRolls() - 1);
         game.setDices(currentDices);
-        return game.getDices();
+        return currentDices;
     }
 
     @Transactional
-    public int chooseBonus(long gameId, String username, int yathzeeBonusIndex)
+    public int chooseBonus(long gameId, String username, int bonusIndex)
             throws YathzeeGameNotFoundException, YathzeePlayerNotFoundException, YathzeeActivePlayerException,
-            YathzeeBonusIndexException, YathzeeBonusAlreadyChosenException, YathzeeBonusNotFoundException, 
+            YathzeeBonusIndexException, YathzeeBonusAlreadyChosenException,
             YathzeeDicesNotRolledException, YathzeeGameOverException {
+
         YathzeeGame game = getGame(gameId);
         YathzeePlayer player = getPlayer(username, game);
-        if (game.isGameOver()) {
-            throw new YathzeeGameOverException("Game is over");
-        }
-        if (game.getActivePlayer() != player) {
-            throw new YathzeeActivePlayerException("Not active player.");
-        }
-        if (yathzeeBonusIndex < 0 || yathzeeBonusIndex >= YathzeeBonus.values().length) {
+
+        if (game.isGameOver()) throw new YathzeeGameOverException("Game is over");
+        if (!game.getActivePlayer().equals(player)) throw new YathzeeActivePlayerException("Not active player.");
+        if (bonusIndex < 0 || bonusIndex >= YathzeeBonus.values().length)
             throw new YathzeeBonusIndexException("Invalid bonus index.");
-        }
-        if (game.getDices().isEmpty()) {
-            throw new YathzeeDicesNotRolledException("Must roll dices before choosing a bonus");
-        }
-        YathzeeBonus bonus = YathzeeBonus.values()[yathzeeBonusIndex];
-        if (yathzeePlayerBonusRepository.existsYathzeePlayerBonusByPlayerAndBonus(player, bonus)) {
+        if (game.getDices().isEmpty()) throw new YathzeeDicesNotRolledException("Roll the dice first");
+
+        YathzeeBonus bonus = YathzeeBonus.values()[bonusIndex];
+        if (yathzeePlayerBonusRepository.existsYathzeePlayerBonusByPlayerAndBonus(player, bonus))
             throw new YathzeeBonusAlreadyChosenException("Bonus already taken.");
+
+        int oldSimple = getSumOfSimple(player);
+        boolean hadYathzee = player.hasYathzee();
+        List<Integer> dices = game.getDices();
+
+        int score = computePointsInternal(dices, bonus);
+
+        if (isSimple(bonus)) {
+            int newSimple = oldSimple + score;
+            if (oldSimple < YathzeeConstants.SIMPLE_SUM_LIMIT && newSimple >= YathzeeConstants.SIMPLE_SUM_LIMIT) {
+                score += YathzeeConstants.SIMPLE_SUM_BONUS;
+            }
         }
-        YathzeePlayerBonus yathzeePlayerBonus = new YathzeePlayerBonus();
-        yathzeePlayerBonus.setPlayer(player);
-        yathzeePlayerBonus.setBonus(bonus);
-        player.getBonuses().add(yathzeePlayerBonus);
-        int oldSimpleScore = getSumOfSimple(player);
-        boolean hasYathzee = player.hasYathzee();
-        int score = computePoints(player, bonus);
-        yathzeePlayerBonus.setScore(score);
-        int newSimpleScore = getSumOfSimple(player);
-        if (oldSimpleScore < YathzeeConstants.SIMPLE_SUM_LIMIT && newSimpleScore >= YathzeeConstants.SIMPLE_SUM_LIMIT) {
-            score += YathzeeConstants.SIMPLE_SUM_BONUS;
-        }
-        if (canYathzee(game.getDices())) {
-            if (hasYathzee) {
+
+        if (canYathzee(dices)) {
+            if (hadYathzee) {
                 score += YathzeeConstants.YATHZEE_BONUS;
             }
             if (bonus == YathzeeBonus.YATHZEE) {
                 player.setHasYathzee(true);
             }
         }
+
+        YathzeePlayerBonus bonusEntity = new YathzeePlayerBonus();
+        bonusEntity.setPlayer(player);
+        bonusEntity.setBonus(bonus);
+        bonusEntity.setScore(score);
+        player.getBonuses().add(bonusEntity);
         player.setScore(player.getScore() + score);
+
         changeActivePlayer(game);
+
         yathzeePlayerRepository.save(player);
         yathzeeGameRepository.save(game);
         return score;
     }
 
-    private YathzeePlayer getPlayer(String username, YathzeeGame game) throws YathzeePlayerNotFoundException {
-        return yathzeePlayerRepository.findByUser_UsernameAndGame_Id(username, game.getId())
-                .orElseThrow(
-                        () -> new YathzeePlayerNotFoundException("Player not found.")
-                );
-    }
+    public List<YathzeeBonusPreviewDTO> previewBonusesForUser(YathzeeGame game, String username)
+            throws YathzeePlayerNotFoundException {
+        YathzeePlayer player = getPlayer(username, game);
+        List<Integer> dices = game.getDices();
+        boolean hasYathzee = player.hasYathzee();
+        int simpleBefore = getSumOfSimple(player);
+        Set<YathzeeBonus> takenBonuses = player.getBonuses().stream()
+                .map(YathzeePlayerBonus::getBonus)
+                .collect(Collectors.toSet());
 
-    private void clearOldDices(YathzeeGame game) {
-        game.getDices().clear();
-    }
+        List<YathzeeBonusPreviewDTO> previews = new ArrayList<>();
+        for (YathzeeBonus bonus : YathzeeBonus.values()) {
+            YathzeeBonusPreviewDTO preview = new YathzeeBonusPreviewDTO();
+            preview.setBonusIndex(bonus.ordinal());
+            preview.setBonusName(bonus.name());
+            preview.setAlreadyChosen(takenBonuses.contains(bonus));
+            int score = 0;
 
-    private int computePoints(YathzeePlayer player, YathzeeBonus bonus) throws YathzeeBonusNotFoundException {
-        YathzeeGame yathzeeGame = player.getGame();
-        List<Integer> dices = yathzeeGame.getDices();
-        switch (bonus) {
-            case SUM_OF_ONE -> {
-                return computeSimplePoints(dices, 1);
+            if (!preview.isAlreadyChosen() && !dices.isEmpty()) {
+                score = computePointsInternal(dices, bonus);
+
+                if (isSimple(bonus)) {
+                    int newSimple = simpleBefore + score;
+                    if (simpleBefore < YathzeeConstants.SIMPLE_SUM_LIMIT && newSimple >= YathzeeConstants.SIMPLE_SUM_LIMIT) {
+                        score += YathzeeConstants.SIMPLE_SUM_BONUS;
+                    }
+                }
+
+                if (canYathzee(dices)) {
+                    if (hasYathzee) {
+                        score += YathzeeConstants.YATHZEE_BONUS;
+                    }
+                }
             }
-            case SUM_OF_TWO -> {
-                return computeSimplePoints(dices, 2);
-            }
-            case SUM_OF_THREE -> {
-                return computeSimplePoints(dices, 3);
-            }
-            case SUM_OF_FOUR -> {
-                return computeSimplePoints(dices, 4);
-            }
-            case SUM_OF_FIVE -> {
-                return computeSimplePoints(dices, 5);
-            }
-            case SUM_OF_SIX -> {
-                return computeSimplePoints(dices, 6);
-            }
-            case THREE_OF_KIND -> {
-                return getNOfKind(dices, 3);
-            }
-            case FOUR_OF_KIND -> {
-                return getNOfKind(dices, 4);
-            }
-            case FULL_HOUSE -> {
-                return fullHouse(dices);
-            }
-            case SM_STRAIGHT ->  {
-                return smallStraight(dices);
-            }
-            case LG_STRAIGHT -> {
-                return largeStraight(dices);
-            }
-            case YATHZEE -> {
-                return getNOfKind(dices, 5);
-            }
-            case CHANCE -> {
-                return dices.stream().mapToInt(Integer::intValue).sum();
-            }
-            default -> throw new YathzeeBonusNotFoundException("This bonus does not exist");
+
+            preview.setPotentialScore(score);
+            previews.add(preview);
         }
+
+        return previews;
     }
 
-    private int smallStraight(List<Integer> dices) {
-            Set<Integer> unique = new HashSet<>(dices);
-            return (unique.containsAll(List.of(1, 2, 3, 4)) ||
-                    unique.containsAll(List.of(2, 3, 4, 5)) ||
-                    unique.containsAll(List.of(3, 4, 5, 6)))
-                    ? 20 : 0;
+    private YathzeePlayer getPlayer(String username, YathzeeGame game)
+            throws YathzeePlayerNotFoundException {
+        return yathzeePlayerRepository
+                .findByUser_UsernameAndGame_Id(username, game.getId())
+                .orElseThrow(() -> new YathzeePlayerNotFoundException("Player not found."));
     }
 
-    private int largeStraight(List<Integer> dices) {
-        Set<Integer> unique = new HashSet<>(dices);
-        return (unique.containsAll(List.of(1, 2, 3, 4, 5)) ||
-                unique.containsAll(List.of(2, 3, 4, 5, 6)))
-                ? 40 : 0;
+    private int computePointsInternal(List<Integer> dices, YathzeeBonus bonus) {
+        return switch (bonus) {
+            case SUM_OF_ONE -> computeSimplePoints(dices, 1);
+            case SUM_OF_TWO -> computeSimplePoints(dices, 2);
+            case SUM_OF_THREE -> computeSimplePoints(dices, 3);
+            case SUM_OF_FOUR -> computeSimplePoints(dices, 4);
+            case SUM_OF_FIVE -> computeSimplePoints(dices, 5);
+            case SUM_OF_SIX -> computeSimplePoints(dices, 6);
+            case THREE_OF_KIND -> getNOfKind(dices, 3);
+            case FOUR_OF_KIND -> getNOfKind(dices, 4);
+            case FULL_HOUSE -> fullHouse(dices);
+            case SM_STRAIGHT -> smallStraight(dices);
+            case LG_STRAIGHT -> largeStraight(dices);
+            case YATHZEE -> getNOfKind(dices, 5);
+            case CHANCE -> dices.stream().mapToInt(Integer::intValue).sum();
+        };
     }
 
     private int computeSimplePoints(List<Integer> dices, int number) {
-        return number * dices.stream().filter(dice -> dice == number).toList().size();
+        return (int) dices.stream().filter(d -> d == number).count() * number;
     }
 
     private int getNOfKind(List<Integer> dices, int n) {
-        Integer value = dices.stream()
+        return dices.stream()
                 .filter(d -> Collections.frequency(dices, d) >= n)
                 .findFirst()
-                .orElse(null);
-        return value != null ? value * n : 0;
+                .map(d -> d * n)
+                .orElse(0);
     }
 
     private boolean canYathzee(List<Integer> dices) {
@@ -205,55 +196,53 @@ public class YathzeeService {
     }
 
     private int fullHouse(List<Integer> dices) {
-        int threeOfKind = getNOfKind(dices, 3) / 3;
-        if (threeOfKind == 0) {
-            return 0;
-        }
+        int three = getNOfKind(dices, 3) / 3;
+        if (three == 0) return 0;
+        List<Integer> rest = dices.stream().filter(d -> d != three).toList();
+        return getNOfKind(rest, 2) > 0 ? 25 : 0;
+    }
 
-        List<Integer> remaining = dices.stream()
-                .filter(d -> !Objects.equals(d, threeOfKind))
-                .collect(Collectors.toList());
-        return getNOfKind(remaining, 2) > 0 ? 25 : 0;
+    private int smallStraight(List<Integer> dices) {
+        Set<Integer> set = new HashSet<>(dices);
+        return (set.containsAll(List.of(1,2,3,4)) ||
+                set.containsAll(List.of(2,3,4,5)) ||
+                set.containsAll(List.of(3,4,5,6))) ? 20 : 0;
+    }
+
+    private int largeStraight(List<Integer> dices) {
+        Set<Integer> set = new HashSet<>(dices);
+        return (set.containsAll(List.of(1,2,3,4,5)) ||
+                set.containsAll(List.of(2,3,4,5,6))) ? 40 : 0;
     }
 
     private void changeActivePlayer(YathzeeGame game) {
         List<YathzeePlayer> players = game.getPlayers();
         int index = players.indexOf(game.getActivePlayer());
-        int newIndex = (index +  1)% players.size();
-        YathzeePlayer newPlayer = players.get(newIndex);
-        game.setActivePlayer(newPlayer);
+        YathzeePlayer next = players.get((index + 1) % players.size());
+        game.setActivePlayer(next);
         game.setRemainingRolls(YathzeeConstants.MAX_ROLLS);
-        clearOldDices(game);
+        game.getDices().clear();
         checkEndOfGame(game);
     }
 
     private void checkEndOfGame(YathzeeGame game) {
-        if (game.getPlayers().stream().allMatch(this::playerHasFinished)) {
-            game.setGameOver(true);
-        }
-    }
-
-    private boolean playerHasFinished(YathzeePlayer player) {
-        return player.getBonuses().size() == YathzeeBonus.values().length;
+        boolean allFinished = game.getPlayers().stream()
+                .allMatch(p -> p.getBonuses().size() == YathzeeBonus.values().length);
+        if (allFinished) game.setGameOver(true);
     }
 
     private int getSumOfSimple(YathzeePlayer player) {
-        List<YathzeePlayerBonus> playerBonuses = player.getBonuses();
-        int simpleScoreSum = 0;
-        for (YathzeePlayerBonus playerBonus : playerBonuses) {
-            switch (playerBonus.getBonus()) {
-                case SUM_OF_ONE, SUM_OF_TWO, SUM_OF_THREE, SUM_OF_FOUR, SUM_OF_FIVE, SUM_OF_SIX:
-                    simpleScoreSum += playerBonus.getScore();
-                    break;
-                default:
-                    break;
-            }
-        }
-        return simpleScoreSum;
+        return player.getBonuses().stream()
+                .filter(b -> isSimple(b.getBonus()))
+                .mapToInt(YathzeePlayerBonus::getScore)
+                .sum();
     }
 
     private boolean isValidDiceIndexes(List<Integer> indexes) {
-        return indexes != null &&
-                indexes.stream().allMatch(i -> i >= 0 && i < 5);
+        return indexes != null && indexes.stream().allMatch(i -> i >= 0 && i < 5);
+    }
+
+    private boolean isSimple(YathzeeBonus bonus) {
+        return bonus.ordinal() <= YathzeeBonus.SUM_OF_SIX.ordinal();
     }
 }
