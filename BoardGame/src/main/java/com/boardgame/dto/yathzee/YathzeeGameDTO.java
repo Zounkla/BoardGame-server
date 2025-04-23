@@ -16,5 +16,7 @@ public class YathzeeGameDTO {
     private List<YathzeePlayerDTO> players;
     private YathzeePlayerDTO activePlayer;
     private List<Integer> dices;
+    private List<YathzeeBonusPreviewDTO> bonusPreviews;
     private int remainingRolls;
+    private boolean gameOver;
 }

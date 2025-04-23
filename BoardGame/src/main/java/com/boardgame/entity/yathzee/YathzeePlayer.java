@@ -47,4 +47,10 @@ public class YathzeePlayer {
 
     @OneToMany(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<YathzeePlayerBonus> bonuses = new ArrayList<>();
+
+    private boolean hasYathzee;
+
+    public boolean hasYathzee() {
+        return hasYathzee;
+    }
 }

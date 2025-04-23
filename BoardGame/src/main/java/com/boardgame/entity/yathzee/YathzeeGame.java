@@ -33,4 +33,6 @@ public class YathzeeGame {
     private List<Integer> dices;
 
     private int remainingRolls = YathzeeConstants.MAX_ROLLS;
+
+    private boolean isGameOver;
 }
