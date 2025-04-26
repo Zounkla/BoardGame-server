@@ -31,8 +31,10 @@ public class SecurityConfig {
     @Bean
     protected SecurityFilterChain securityFilterChain (HttpSecurity httpSecurity) throws Exception {
         //TODO REMOVE THIS WHEN FRONT
-        httpSecurity.csrf().disable();
         httpSecurity
+                .cors()
+                .and()
+                .csrf().disable()
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers(
                             "/v3/api-docs/**",
