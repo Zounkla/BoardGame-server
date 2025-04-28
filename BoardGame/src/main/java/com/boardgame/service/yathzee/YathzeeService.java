@@ -1,11 +1,13 @@
 package com.boardgame.service.yathzee;
 
 import com.boardgame.dto.yathzee.YathzeeBonusPreviewDTO;
+import com.boardgame.dto.yathzee.YathzeeGameDTO;
 import com.boardgame.entity.yathzee.YathzeeGame;
 import com.boardgame.entity.yathzee.YathzeePlayer;
 import com.boardgame.entity.yathzee.YathzeePlayerBonus;
 import com.boardgame.enums.yathzee.YathzeeBonus;
 import com.boardgame.exceptions.yathzee.*;
+import com.boardgame.mapper.yathzee.YathzeeMapper;
 import com.boardgame.repository.yathzee.YathzeeGameRepository;
 import com.boardgame.repository.yathzee.YathzeePlayerBonusRepository;
 import com.boardgame.repository.yathzee.YathzeePlayerRepository;
@@ -13,8 +15,11 @@ import com.boardgame.utils.yathzee.YathzeeConstants;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -25,6 +30,29 @@ public class YathzeeService {
     private final YathzeeGameRepository yathzeeGameRepository;
     private final YathzeePlayerRepository yathzeePlayerRepository;
     private final YathzeePlayerBonusRepository yathzeePlayerBonusRepository;
+    private final YathzeeMapper yathzeeMapper;
+
+    private final Map<Long, Map<String, SseEmitter>> emittersPerGame = new ConcurrentHashMap<>();
+
+    public SseEmitter createSseEmitterForGame(Long gameId, String username) throws YathzeeGameNotFoundException,
+            YathzeePlayerNotFoundException {
+
+        YathzeeGame game = getGame(gameId);
+        getPlayer(username, game);
+
+        SseEmitter emitter = new SseEmitter(0L);
+
+        emittersPerGame
+                .computeIfAbsent(gameId, id -> new ConcurrentHashMap<>())
+                .put(username, emitter);
+
+        emitter.onCompletion(() -> removeEmitter(gameId, username));
+        emitter.onTimeout(() -> removeEmitter(gameId, username));
+        emitter.onError((e) -> removeEmitter(gameId, username));
+
+        return emitter;
+    }
+
 
     public YathzeeGame getGame(long gameId) throws YathzeeGameNotFoundException {
         return yathzeeGameRepository.findById(gameId)
@@ -54,6 +82,8 @@ public class YathzeeService {
 
         game.setRemainingRolls(game.getRemainingRolls() - 1);
         game.setDices(currentDices);
+        YathzeeGameDTO dto = yathzeeMapper.toYathzeeGameDTO(game);
+        sendGameUpdate(gameId, dto);
         return currentDices;
     }
 
@@ -154,11 +184,27 @@ public class YathzeeService {
         return previews;
     }
 
-    private YathzeePlayer getPlayer(String username, YathzeeGame game)
+    public YathzeePlayer getPlayer(String username, YathzeeGame game)
             throws YathzeePlayerNotFoundException {
         return yathzeePlayerRepository
                 .findByUser_UsernameAndGame_Id(username, game.getId())
                 .orElseThrow(() -> new YathzeePlayerNotFoundException("Player not found."));
+    }
+
+    public void sendGameUpdate(Long gameId, Object data) {
+        Map<String, SseEmitter> emitters = emittersPerGame.get(gameId);
+        if (emitters != null) {
+            emitters.forEach((username, emitter) -> {
+                try {
+                    emitter.send(SseEmitter.event()
+                            .name("game-update")
+                            .data(data));
+                } catch (IOException e) {
+                    emitter.complete();
+                    removeEmitter(gameId, username);
+                }
+            });
+        }
     }
 
     private int computePointsInternal(List<Integer> dices, YathzeeBonus bonus) {
@@ -244,5 +290,15 @@ public class YathzeeService {
 
     private boolean isSimple(YathzeeBonus bonus) {
         return bonus.ordinal() <= YathzeeBonus.SUM_OF_SIX.ordinal();
+    }
+
+    private void removeEmitter(Long gameId, String username) {
+        Map<String, SseEmitter> emitters = emittersPerGame.get(gameId);
+        if (emitters != null) {
+            emitters.remove(username);
+            if (emitters.isEmpty()) {
+                emittersPerGame.remove(gameId);
+            }
+        }
     }
 }
