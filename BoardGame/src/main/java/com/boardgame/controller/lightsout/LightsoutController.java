@@ -1,5 +1,6 @@
 package com.boardgame.controller.lightsout;
 
+import com.boardgame.dto.lightsout.LightsoutClickRequestDTO;
 import com.boardgame.dto.lightsout.LightsoutGameDTO;
 import com.boardgame.entity.lightsout.LightsoutGame;
 import com.boardgame.exceptions.lightsout.LightsoutGameNotFoundException;
@@ -37,13 +38,12 @@ public class LightsoutController {
     }
 
     @PostMapping("/click")
-    public ResponseEntity<LightsoutGameDTO> click(@RequestParam Long gameId,
-                                                  @RequestParam int x,
-                                                  @RequestParam int y)
+    public ResponseEntity<LightsoutGameDTO> click(@RequestBody LightsoutClickRequestDTO request)
             throws LightsoutGameNotFoundException, LightsoutPlayerNotFoundException,
             LightsoutInvalidIndexException, LightsoutGameOverException {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String username = ((UserDetails) principal).getUsername();
-        return ResponseEntity.ok(lightsoutMapper.toLightsoutGameDTO(lightsoutService.click(gameId, username, x, y)));
+        return ResponseEntity.ok(lightsoutMapper.toLightsoutGameDTO(lightsoutService.click(request.gameId, username,
+                request.x, request.y)));
     }
 }
