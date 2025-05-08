@@ -3,13 +3,11 @@ package com.boardgame.service.lightsout;
 import com.boardgame.entity.lightsout.LightsoutGame;
 import com.boardgame.entity.lightsout.LightsoutPlayer;
 import com.boardgame.entity.platform.AppUser;
-import com.boardgame.exceptions.lightsout.LightsoutGameNotFoundException;
-import com.boardgame.exceptions.lightsout.LightsoutGameOverException;
-import com.boardgame.exceptions.lightsout.LightsoutInvalidIndexException;
-import com.boardgame.exceptions.lightsout.LightsoutPlayerNotFoundException;
+import com.boardgame.exceptions.lightsout.*;
 import com.boardgame.repository.lightsout.LightsoutGameRepository;
 import com.boardgame.repository.lightsout.LightsoutPlayerRepository;
 import com.boardgame.repository.platform.AppUserRepository;
+import com.boardgame.utils.lightsout.LightsoutConstants;
 import com.boardgame.utils.lightsout.LightsoutGridConverter;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,7 +26,8 @@ public class LightsoutService {
     private final LightsoutPlayerRepository lightsoutPlayerRepository;
 
     @Transactional
-    public LightsoutGame createGame(int size, String username) {
+    public LightsoutGame createGame(int size, String username) throws LightsoutInvalidSizeException {
+        if (size > LightsoutConstants.MAX_SIZE) throw new LightsoutInvalidSizeException("Size must be less than 256");
         LightsoutGame game = new LightsoutGame();
         AppUser user = appUserRepository.findByUsername(username).get();
         LightsoutPlayer player = new LightsoutPlayer();
@@ -66,7 +65,7 @@ public class LightsoutService {
 
     private boolean[][] createGrid(int size) {
         boolean[][] grid = new boolean[size][size];
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < LightsoutConstants.RANDOM_CLICK; i++) {
             int x = ThreadLocalRandom.current().nextInt(0, size);
             int y = ThreadLocalRandom.current().nextInt(0, size);
             clickBox(grid, x, y);

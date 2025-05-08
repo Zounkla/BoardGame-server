@@ -3,10 +3,7 @@ package com.boardgame.controller.lightsout;
 import com.boardgame.dto.lightsout.LightsoutClickRequestDTO;
 import com.boardgame.dto.lightsout.LightsoutGameDTO;
 import com.boardgame.entity.lightsout.LightsoutGame;
-import com.boardgame.exceptions.lightsout.LightsoutGameNotFoundException;
-import com.boardgame.exceptions.lightsout.LightsoutGameOverException;
-import com.boardgame.exceptions.lightsout.LightsoutInvalidIndexException;
-import com.boardgame.exceptions.lightsout.LightsoutPlayerNotFoundException;
+import com.boardgame.exceptions.lightsout.*;
 import com.boardgame.mapper.lightsout.LightsoutMapper;
 import com.boardgame.service.lightsout.LightsoutService;
 import lombok.AllArgsConstructor;
@@ -24,7 +21,7 @@ public class LightsoutController {
     private final LightsoutService lightsoutService;
 
     @PostMapping("/new")
-    public ResponseEntity<LightsoutGameDTO> createGame(@RequestParam int size) {
+    public ResponseEntity<LightsoutGameDTO> createGame(@RequestParam int size) throws LightsoutInvalidSizeException {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String username = ((UserDetails) principal).getUsername();
         return ResponseEntity.ok(lightsoutMapper.toLightsoutGameDTO(lightsoutService.createGame(size, username)));
