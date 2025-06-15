@@ -5,6 +5,7 @@ import com.boardgame.entity.yathzee.YathzeeGame;
 import com.boardgame.entity.yathzee.YathzeeLobby;
 import com.boardgame.entity.yathzee.YathzeePlayer;
 import com.boardgame.enums.lobby.LobbyStatus;
+import com.boardgame.exceptions.lobby.*;
 import com.boardgame.exceptions.yathzee.*;
 import com.boardgame.repository.platform.AppUserRepository;
 import com.boardgame.repository.yathzee.YathzeeGameRepository;

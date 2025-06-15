@@ -10,12 +10,12 @@ import com.boardgame.dto.tictactoe.TictactoeGameDTO;
 import com.boardgame.dto.tictactoe.TictactoeLobbyDTO;
 import com.boardgame.entity.tictactoe.TictactoeLobby;
 import com.boardgame.exceptions.yathzee.GameStartedException;
-import com.boardgame.exceptions.yathzee.LobbyAlreadyExistsException;
-import com.boardgame.exceptions.yathzee.LobbyFullException;
-import com.boardgame.exceptions.yathzee.LobbyInGameException;
-import com.boardgame.exceptions.yathzee.LobbyNotFoundException;
-import com.boardgame.exceptions.yathzee.NotEnoughPlayerException;
-import com.boardgame.exceptions.yathzee.PlayerAlreadyInLobbyException;
+import com.boardgame.exceptions.lobby.LobbyAlreadyExistsException;
+import com.boardgame.exceptions.lobby.LobbyFullException;
+import com.boardgame.exceptions.lobby.LobbyInGameException;
+import com.boardgame.exceptions.lobby.LobbyNotFoundException;
+import com.boardgame.exceptions.lobby.NotEnoughPlayerException;
+import com.boardgame.exceptions.lobby.PlayerAlreadyInLobbyException;
 import com.boardgame.mapper.tictactoe.TictactoeMapper;
 import com.boardgame.service.tictactoe.TictactoeLobbyService;
 import com.boardgame.utils.tictactoe.TictactoeConstants;
@@ -38,10 +38,9 @@ public class TictactoeLobbyController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<TictactoeLobbyDTO> createLobby(@RequestParam String name,
-                                                       @RequestParam(defaultValue = "" + TictactoeConstants.MAX_PLAYERS) int maxPlayers)
+    public ResponseEntity<TictactoeLobbyDTO> createLobby(@RequestParam String name)
             throws LobbyAlreadyExistsException {
-        return ResponseEntity.ok(mapper.toTictactoeLobbyDTO(lobbyService.createLobby(name, maxPlayers)));
+        return ResponseEntity.ok(mapper.toTictactoeLobbyDTO(lobbyService.createLobby(name)));
     }
 
     @PostMapping("/{lobbyId}/join")

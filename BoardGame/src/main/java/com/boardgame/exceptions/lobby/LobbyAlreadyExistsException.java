@@ -1,4 +1,4 @@
-package com.boardgame.exceptions.yathzee;
+package com.boardgame.exceptions.lobby;
 
 public class LobbyAlreadyExistsException extends Exception {
     public LobbyAlreadyExistsException(String message) {

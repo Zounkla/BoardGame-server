@@ -12,12 +12,12 @@ import com.boardgame.entity.tictactoe.TictactoeLobby;
 import com.boardgame.entity.tictactoe.TictactoePlayer;
 import com.boardgame.enums.lobby.LobbyStatus;
 import com.boardgame.exceptions.yathzee.GameStartedException;
-import com.boardgame.exceptions.yathzee.LobbyAlreadyExistsException;
-import com.boardgame.exceptions.yathzee.LobbyFullException;
-import com.boardgame.exceptions.yathzee.LobbyInGameException;
-import com.boardgame.exceptions.yathzee.LobbyNotFoundException;
-import com.boardgame.exceptions.yathzee.NotEnoughPlayerException;
-import com.boardgame.exceptions.yathzee.PlayerAlreadyInLobbyException;
+import com.boardgame.exceptions.lobby.LobbyAlreadyExistsException;
+import com.boardgame.exceptions.lobby.LobbyFullException;
+import com.boardgame.exceptions.lobby.LobbyInGameException;
+import com.boardgame.exceptions.lobby.LobbyNotFoundException;
+import com.boardgame.exceptions.lobby.NotEnoughPlayerException;
+import com.boardgame.exceptions.lobby.PlayerAlreadyInLobbyException;
 import com.boardgame.repository.platform.AppUserRepository;
 import com.boardgame.repository.tictactoe.TictactoeGameRepository;
 import com.boardgame.repository.tictactoe.TictactoeLobbyRepository;
@@ -42,7 +42,7 @@ public class TictactoeLobbyService {
     }
 
     @Transactional
-    public TictactoeLobby createLobby(String name, int maxPlayers) throws LobbyAlreadyExistsException {
+    public TictactoeLobby createLobby(String name) throws LobbyAlreadyExistsException {
         if (lobbyRepository.findByName(name).isPresent()) {
             throw new LobbyAlreadyExistsException("TictactoeLobby with name " + name + " already exists");
         }
@@ -80,8 +80,8 @@ public class TictactoeLobbyService {
         if (lobby.getStatus() != LobbyStatus.WAITING) {
             throw new GameStartedException("Game already started.");
         }
-        if (lobby.getPlayers().isEmpty()) {
-            throw new NotEnoughPlayerException("Game must have at least one player");
+        if (lobby.getPlayers().size() < TictactoeConstants.MIN_PLAYERS) {
+            throw new NotEnoughPlayerException("Game must have at least 2 players");
         }
         if (lobby.getPlayers().size() > TictactoeConstants.MAX_PLAYERS) {
             throw new LobbyFullException("Game must have 2 players max");

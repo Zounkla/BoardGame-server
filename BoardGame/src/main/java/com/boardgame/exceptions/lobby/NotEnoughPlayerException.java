@@ -1,4 +1,4 @@
-package com.boardgame.exceptions.yathzee;
+package com.boardgame.exceptions.lobby;
 
 public class NotEnoughPlayerException extends Exception {
     public NotEnoughPlayerException(String message) {

@@ -1,4 +1,4 @@
-package com.boardgame.exceptions.yathzee;
+package com.boardgame.exceptions.lobby;
 
 public class LobbyInGameException extends Exception {
     public LobbyInGameException(String message) {

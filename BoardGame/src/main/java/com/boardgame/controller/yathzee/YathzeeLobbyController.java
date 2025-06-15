@@ -3,6 +3,7 @@ package com.boardgame.controller.yathzee;
 import com.boardgame.dto.yathzee.YathzeeGameDTO;
 import com.boardgame.dto.yathzee.YathzeeLobbyDTO;
 import com.boardgame.entity.yathzee.YathzeeLobby;
+import com.boardgame.exceptions.lobby.*;
 import com.boardgame.exceptions.yathzee.*;
 import com.boardgame.service.yathzee.YathzeeLobbyService;
 import com.boardgame.mapper.yathzee.YathzeeMapper;
