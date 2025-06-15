@@ -10,15 +10,26 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
     private final UserDetailsService userDetailsService;
+
+    private static final List<String> WHITELIST = List.of(
+            "/v3/api-docs",
+            "/v3/api-docs/**",
+            "/swagger-ui.html",
+            "/swagger-ui/**",
+            "/swagger-resources/**",
+            "/webjars/**"
+    );
 
     public JwtAuthenticationFilter(JwtUtils jwtUtils, UserDetailsService userDetailsService) {
         this.jwtUtils = jwtUtils;
@@ -43,6 +54,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return WHITELIST.stream().anyMatch(uri -> new AntPathMatcher().match(uri, request.getServletPath()));
+    }
 
     private String extractJwtFromRequest(HttpServletRequest request) {
         String header = request.getHeader("Authorization");

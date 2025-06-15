@@ -1,21 +1,16 @@
 package com.boardgame.dto.tictactoe;
 
-
+import com.boardgame.dto.platform.AppUserDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class TictactoeGameDTO {
+public class TicTacToePlayerDTO {
     private Long id;
-    private List<TicTacToePlayerDTO> players;
-    private TicTacToePlayerDTO activePlayer;
-    private int remainingRolls;
-    private boolean gameOver;
+    private AppUserDTO user;
 }
