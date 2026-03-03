@@ -2,6 +2,7 @@ package com.boardgame.controller.yathzee;
 
 import com.boardgame.exceptions.yathzee.YathzeeGameNotFoundException;
 import com.boardgame.exceptions.yathzee.YathzeePlayerNotFoundException;
+import com.boardgame.service.yathzee.YathzeeLobbyService;
 import com.boardgame.service.yathzee.YathzeeService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.MediaType;
@@ -17,6 +18,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class YathzeeSseController {
 
     private final YathzeeService yathzeeService;
+    private final YathzeeLobbyService yathzeeLobbyService;
 
     @GetMapping(value = "/yathzee/{gameId}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamGame(@PathVariable Long gameId) throws YathzeeGameNotFoundException,
@@ -25,5 +27,12 @@ public class YathzeeSseController {
         String username = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
 
         return yathzeeService.createSseEmitterForGame(gameId, username);
+    }
+
+    @GetMapping(value = "/lobbies/yathzee/{lobbyId}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamLobby(@PathVariable Long lobbyId) {
+        String username = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
+
+        return yathzeeLobbyService.createLobbySseEmitter(lobbyId, username);
     }
 }

@@ -36,7 +36,7 @@ public class YathzeeController {
     }
 
     @PostMapping("/{gameId}/roll")
-    public ResponseEntity<List<Integer>> rollDices(@PathVariable long gameId,
+    public ResponseEntity<YathzeeGameDTO> rollDices(@PathVariable long gameId,
                                                    @RequestBody YathzeeRollDiceRequestDTO yathzeeRollDiceRequestDTO)
             throws YathzeeActivePlayerException, YathzeePlayerNotFoundException, YathzeeRollsException,
             YathzeeGameNotFoundException, YathzeeGameOverException, YathzeeDiceInvalidIndexesException {
@@ -45,19 +45,24 @@ public class YathzeeController {
         List<Integer> diceIndexes = yathzeeRollDiceRequestDTO == null || isNullOrEmpty(yathzeeRollDiceRequestDTO.getDiceIndexes())
                 ? new ArrayList<>()
                 : yathzeeRollDiceRequestDTO.getDiceIndexes();
-        return ResponseEntity.ok(yathzeeService.rollDices(gameId, username, diceIndexes));
+        YathzeeGameDTO gameDTO = yathzeeService.rollDices(gameId, username, diceIndexes);
+        YathzeeGame game = yathzeeService.getGame(gameId);
+        gameDTO.setBonusPreviews(yathzeeService.previewBonusesForUser(game, username));
+        return ResponseEntity.ok(gameDTO);
     }
 
     @PostMapping("/{gameId}/choose/{bonusIndex}")
-    public ResponseEntity<Integer> chooseBonus(@PathVariable long gameId,
+    public ResponseEntity<YathzeeGameDTO> chooseBonus(@PathVariable long gameId,
                                                    @PathVariable int bonusIndex)
             throws YathzeePlayerNotFoundException, YathzeeActivePlayerException, YathzeeBonusIndexException,
             YathzeeGameNotFoundException, YathzeeBonusAlreadyChosenException,
-            YathzeeDicesNotRolledException, YathzeeGameOverException {
+            YathzeeDicesNotRolledException, YathzeeGameOverException, YathzeeRollsException, YathzeeDiceInvalidIndexesException {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String username = ((UserDetails) principal).getUsername();
-
-        return ResponseEntity.ok(yathzeeService.chooseBonus(gameId, username, bonusIndex));
+        YathzeeGameDTO gameDTO = yathzeeService.chooseBonus(gameId, username, bonusIndex);
+        YathzeeGame game = yathzeeService.getGame(gameId);
+        gameDTO.setBonusPreviews(yathzeeService.previewBonusesForUser(game, username));
+        return ResponseEntity.ok(gameDTO);
     }
 
     private boolean isNullOrEmpty(List<Integer> list) {

@@ -1,20 +1,16 @@
 package com.boardgame.dto.yathzee;
 
-import com.boardgame.dto.platform.AppUserDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class YathzeePlayerDTO {
-    private Long id;
+public class YathzeePlayerBonusDTO {
     private int score;
-    private AppUserDTO user;
-    private List<YathzeePlayerBonusDTO> bonuses;
+    private String bonusName;
+    private String playerName;
 }

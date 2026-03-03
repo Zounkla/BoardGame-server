@@ -1,7 +1,7 @@
 services:
   postgres:
     container_name: boardgame-postgres
-    image: 'postgres:latest'
+    image: 'postgres:16'
     environment:
       POSTGRES_DB: ${DATABASE_NAME}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}

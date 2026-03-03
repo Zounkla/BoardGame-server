@@ -60,7 +60,7 @@ public class YathzeeService {
     }
 
     @Transactional
-    public List<Integer> rollDices(long gameId, String username, List<Integer> diceIndexesToRoll)
+    public YathzeeGameDTO rollDices(long gameId, String username, List<Integer> diceIndexesToRoll)
             throws YathzeeGameNotFoundException, YathzeeRollsException, YathzeeActivePlayerException,
             YathzeePlayerNotFoundException, YathzeeGameOverException, YathzeeDiceInvalidIndexesException {
         YathzeeGame game = getGame(gameId);
@@ -84,14 +84,14 @@ public class YathzeeService {
         game.setDices(currentDices);
         YathzeeGameDTO dto = yathzeeMapper.toYathzeeGameDTO(game);
         sendGameUpdate(gameId, dto);
-        return currentDices;
+        return dto;
     }
 
     @Transactional
-    public int chooseBonus(long gameId, String username, int bonusIndex)
+    public YathzeeGameDTO chooseBonus(long gameId, String username, int bonusIndex)
             throws YathzeeGameNotFoundException, YathzeePlayerNotFoundException, YathzeeActivePlayerException,
             YathzeeBonusIndexException, YathzeeBonusAlreadyChosenException,
-            YathzeeDicesNotRolledException, YathzeeGameOverException {
+            YathzeeDicesNotRolledException, YathzeeGameOverException, YathzeeRollsException, YathzeeDiceInvalidIndexesException {
 
         YathzeeGame game = getGame(gameId);
         YathzeePlayer player = getPlayer(username, game);
@@ -139,7 +139,11 @@ public class YathzeeService {
 
         yathzeePlayerRepository.save(player);
         yathzeeGameRepository.save(game);
-        return score;
+        YathzeeGameDTO dto = yathzeeMapper.toYathzeeGameDTO(game);
+
+        rollDices(gameId, game.getActivePlayer().getUser().getUsername(),Arrays.asList(1, 2, 3 ,4 ,0));
+        sendGameUpdate(gameId, dto);
+        return dto;
     }
 
     public List<YathzeeBonusPreviewDTO> previewBonusesForUser(YathzeeGame game, String username)

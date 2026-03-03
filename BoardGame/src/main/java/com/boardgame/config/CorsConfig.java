@@ -13,8 +13,8 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://192.168.1.6:4200", "http://192.168.1.11:4200",
-                                "http://192.168.1.3:4200")
+                        .allowedOriginPatterns("http://192.168.1.*:4200")
+                        .allowedOrigins("http://florian:4200")
                         .allowedMethods("*")
                         .allowedHeaders("*")
                         .allowCredentials(true);

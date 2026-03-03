@@ -14,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 public class YathzeeLobbyDTO {
     private Long id;
+    private YathzeeGameDTO game;
     private String name;
     private LobbyStatus status;
     private int maxPlayers;

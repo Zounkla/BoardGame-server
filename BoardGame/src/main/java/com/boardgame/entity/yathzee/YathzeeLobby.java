@@ -34,6 +34,10 @@ public class YathzeeLobby {
     @Column(nullable = false)
     private int maxPlayers = YathzeeConstants.MAX_PLAYERS;
 
+    @OneToOne
+    @JoinColumn(name = "game_id")
+    private YathzeeGame game;
+
     public void addPlayer(YathzeePlayer player) {
         if (players.size() >= maxPlayers) {
             throw new IllegalStateException("Lobby is full.");
