@@ -44,7 +44,7 @@ public class YathzeeLobbyService {
     }
 
     public SseEmitter createLobbySseEmitter(Long lobbyId, String username) {
-        SseEmitter emitter = new SseEmitter(0L);
+        SseEmitter emitter = new SseEmitter(300_000L);
 
         lobbyEmitters
                 .computeIfAbsent(lobbyId, id -> new ConcurrentHashMap<>())
@@ -125,7 +125,7 @@ public class YathzeeLobbyService {
 
         YathzeeGame game = new YathzeeGame();
         game.setPlayers(new ArrayList<>(lobby.getPlayers()));
-        game.setActivePlayer(lobby.getPlayers().get(0));
+        game.setActivePlayer(game.getPlayers().get(0));
         game.setDices(new ArrayList<>(YathzeeConstants.NB_DICES));
         yathzeeGameRepository.save(game);
 

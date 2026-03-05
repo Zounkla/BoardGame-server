@@ -13,5 +13,6 @@ public enum YathzeeBonus {
     SM_STRAIGHT,
     LG_STRAIGHT,
     YATHZEE,
-    CHANCE
+    CHANCE,
+    SIMPLE_SUM_BONUS
 }

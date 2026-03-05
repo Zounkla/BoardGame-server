@@ -40,7 +40,7 @@ public class YathzeeService {
         YathzeeGame game = getGame(gameId);
         getPlayer(username, game);
 
-        SseEmitter emitter = new SseEmitter(0L);
+        SseEmitter emitter = new SseEmitter(300_000L);
 
         emittersPerGame
                 .computeIfAbsent(gameId, id -> new ConcurrentHashMap<>())
@@ -115,7 +115,12 @@ public class YathzeeService {
         if (isSimple(bonus)) {
             int newSimple = oldSimple + score;
             if (oldSimple < YathzeeConstants.SIMPLE_SUM_LIMIT && newSimple >= YathzeeConstants.SIMPLE_SUM_LIMIT) {
-                score += YathzeeConstants.SIMPLE_SUM_BONUS;
+                YathzeePlayerBonus simpleBonusEntity = new YathzeePlayerBonus();
+                simpleBonusEntity.setPlayer(player);
+                simpleBonusEntity.setBonus(YathzeeBonus.SIMPLE_SUM_BONUS);
+                simpleBonusEntity.setScore(YathzeeConstants.SIMPLE_SUM_BONUS);
+                player.getBonuses().add(simpleBonusEntity);
+                player.setScore(player.getScore() + YathzeeConstants.SIMPLE_SUM_BONUS);
             }
         }
 
@@ -141,7 +146,9 @@ public class YathzeeService {
         yathzeeGameRepository.save(game);
         YathzeeGameDTO dto = yathzeeMapper.toYathzeeGameDTO(game);
 
-        rollDices(gameId, game.getActivePlayer().getUser().getUsername(),Arrays.asList(1, 2, 3 ,4 ,0));
+        if (!game.isGameOver()) {
+            rollDices(gameId, game.getActivePlayer().getUser().getUsername(),Arrays.asList(1, 2, 3 ,4 ,0));
+        }
         sendGameUpdate(gameId, dto);
         return dto;
     }
@@ -224,8 +231,9 @@ public class YathzeeService {
             case FULL_HOUSE -> fullHouse(dices);
             case SM_STRAIGHT -> smallStraight(dices);
             case LG_STRAIGHT -> largeStraight(dices);
-            case YATHZEE -> getNOfKind(dices, 5);
+            case YATHZEE -> yathzee(dices);
             case CHANCE -> dices.stream().mapToInt(Integer::intValue).sum();
+            case SIMPLE_SUM_BONUS -> 0;
         };
     }
 
@@ -265,6 +273,10 @@ public class YathzeeService {
                 set.containsAll(List.of(2,3,4,5,6))) ? 40 : 0;
     }
 
+    private int yathzee(List<Integer> dices) {
+        return getNOfKind(dices, 5) != 0 ? 50 : 0;
+    }
+
     private void changeActivePlayer(YathzeeGame game) {
         List<YathzeePlayer> players = game.getPlayers();
         int index = players.indexOf(game.getActivePlayer());
@@ -276,8 +288,15 @@ public class YathzeeService {
     }
 
     private void checkEndOfGame(YathzeeGame game) {
+        int expectedBonuses = (int) Arrays.stream(YathzeeBonus.values())
+                .filter(b -> b != YathzeeBonus.SIMPLE_SUM_BONUS)
+                .count();
+
         boolean allFinished = game.getPlayers().stream()
-                .allMatch(p -> p.getBonuses().size() == YathzeeBonus.values().length);
+                .allMatch(p -> p.getBonuses().stream()
+                        .filter(b -> b.getBonus() != YathzeeBonus.SIMPLE_SUM_BONUS)
+                        .count() == expectedBonuses);
+
         if (allFinished) game.setGameOver(true);
     }
 
